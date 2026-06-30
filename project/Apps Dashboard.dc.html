@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="./colors_and_type.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--maestro-ink); }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--maestro-ink-3); border-radius: 999px; border: 3px solid transparent; background-clip: padding-box; }
+    [data-app-card] { transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out); }
+    [data-app-card]:not([disabled]) { cursor: pointer; }
+    [data-app-card]:not([disabled]):hover { background: var(--bg-wash); border-color: var(--maestro-muted-2); }
+    [data-app-card]:not([disabled]):active { transform: scale(0.99); }
+    [data-app-card][disabled] { opacity: 0.5; cursor: not-allowed; }
+    [data-kebab] { transition: background var(--dur-fast), color var(--dur-fast); }
+    [data-kebab]:hover { background: var(--maestro-ink-3); color: var(--fg-2); }
+    [data-nav] { transition: background var(--dur-fast), color var(--dur-fast); }
+    [data-nav]:not([data-locked="true"]):hover { background: var(--maestro-ink-2); color: var(--maestro-paper); }
+    [data-btn] { transition: background var(--dur-fast), color var(--dur-fast), transform var(--dur-fast); }
+    [data-btn]:active { transform: scale(0.97); }
+    [data-btn="primary"]:hover { background: var(--maestro-paper); }
+    [data-btn="accent"]:hover { background: var(--evergreen-300); }
+    [data-btn="secondary"]:hover { background: var(--maestro-ink-3); }
+    [data-seg] { transition: color var(--dur-fast), background var(--dur-fast); }
+    @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+    @keyframes screenIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  </style>
+</helmet>
+<div data-theme="dark" style="display:flex;min-height:100vh;width:100%;background:var(--bg-page);color:var(--fg-1);font-family:var(--font-text)">
+
+  <aside style="{{ sidebarStyle }}">
+    <div style="{{ brandRowStyle }}">
+      <a href="#" onClick="{{ onLogoClick }}" title="{{ logoTitle }}" style="display:flex;align-items:center;gap:10px;text-decoration:none;min-width:0">
+        <img src="./assets/logo-mark-light.svg" alt="" style="width:26px;height:auto;flex:0 0 auto;display:block" />
+        <span style="{{ brandWordStyle }}">maestro</span>
+      </a>
+      <sc-if value="{{ expanded }}" hint-placeholder-val="{{ true }}"><button data-nav data-locked="false" type="button" onClick="{{ toggleCollapse }}" aria-label="Collapse sidebar" style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:transparent;border:none;color:var(--maestro-muted);cursor:pointer;flex:0 0 auto;padding:0">{{ panelIcon }}</button></sc-if>
+    </div>
+
+    <button data-nav data-locked="false" type="button" onClick="{{ onWorkspace }}" style="{{ workspaceStyle }}">
+      <span style="display:inline-flex;width:20px;height:20px;flex:0 0 auto">{{ wrenchIcon }}</span>
+      <span style="{{ labelStyle }}">LMS</span>
+    </button>
+
+    <div style="height:1px;background:var(--maestro-ink-3);margin:14px 6px"></div>
+
+    <nav style="display:flex;flex-direction:column;gap:2px;flex:1;min-height:0;overflow:hidden auto">
+      <sc-for list="{{ navA }}" as="item" hint-placeholder-count="3">
+        <button data-nav data-locked="{{ item.lockedStr }}" type="button" onClick="{{ item.onClick }}" title="{{ item.name }}" style="{{ item.style }}">
+          <span style="display:inline-flex;width:20px;height:20px;flex:0 0 auto">{{ item.iconEl }}</span>
+          <span style="{{ item.labelStyle }}">{{ item.name }}</span>
+          <sc-if value="{{ item.locked }}"><span style="{{ item.lockStyle }}">{{ lockIcon }}</span></sc-if>
+        </button>
+      </sc-for>
+      <div style="height:1px;background:var(--maestro-ink-3);margin:14px 6px"></div>
+      <sc-for list="{{ navB }}" as="item" hint-placeholder-count="6">
+        <button data-nav data-locked="{{ item.lockedStr }}" type="button" onClick="{{ item.onClick }}" title="{{ item.name }}" style="{{ item.style }}">
+          <span style="display:inline-flex;width:20px;height:20px;flex:0 0 auto">{{ item.iconEl }}</span>
+          <span style="{{ item.labelStyle }}">{{ item.name }}</span>
+          <sc-if value="{{ item.locked }}"><span style="{{ item.lockStyle }}">{{ lockIcon }}</span></sc-if>
+        </button>
+      </sc-for>
+    </nav>
+
+    <button data-nav data-locked="false" type="button" onClick="{{ onProfile }}" style="{{ profileStyle }}">
+      <span style="display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:30px;height:30px;border-radius:999px;background:var(--maestro-ink-3);color:var(--maestro-paper-3);font-family:var(--font-mono);font-size:12px">M</span>
+      <span style="{{ profileTextStyle }}">
+        <span style="font-family:var(--font-ui);font-size:13px;font-weight:600;color:var(--maestro-paper-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Michael Nagen</span>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--maestro-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">michael.n@fellowship.mastersc…</span>
+      </span>
+    </button>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="position:sticky;top:0;height:56px;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:0 clamp(16px,4vw,40px);background:rgba(10,10,10,0.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--maestro-ink-3);z-index:20">
+      <nav style="display:flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:13px;min-width:0;overflow:hidden">
+        <sc-for list="{{ crumbs }}" as="c" hint-placeholder-count="2">
+          <span style="display:inline-flex;align-items:center;gap:10px;min-width:0">
+            <sc-if value="{{ c.sep }}"><span style="display:inline-flex;width:14px;height:14px;color:var(--maestro-ink-3);flex:0 0 auto">{{ chevronRightEl }}</span></sc-if>
+            <a href="#" onClick="{{ c.onClick }}" style="{{ c.style }}">{{ c.label }}</a>
+          </span>
+        </sc-for>
+      </nav>
+      <button data-kebab type="button" onClick="{{ onSearch }}" aria-label="Search" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;background:transparent;border:none;color:var(--fg-3);cursor:pointer;flex:0 0 auto">{{ searchIcon }}</button>
+    </header>
+
+    <main style="flex:1;width:100%;max-width:980px;margin:0 auto;padding:clamp(20px,4vw,40px) clamp(16px,4vw,48px) 96px">
+
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:20px 24px;margin-bottom:24px">
+            <div style="min-width:0">
+              <p style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-3);margin:0 0 12px">Your workspace</p>
+              <h1 style="font-family:var(--font-display);font-weight:600;font-size:34px;line-height:1.1;letter-spacing:-0.01em;margin:0;color:var(--fg-2)">Apps &amp; <em>tools</em></h1>
+              <p style="font-family:var(--font-text);font-size:14px;line-height:1.55;color:var(--fg-3);margin:14px 0 0;max-width:520px">Everything you need to learn and build, in one place. Pick a tool to jump in.</p>
+            </div>
+            <div role="tablist" aria-label="Layout" style="display:inline-flex;background:var(--maestro-ink-2);border:1px solid var(--maestro-ink-3);border-radius:var(--radius-pill);padding:3px;gap:2px">
+              <sc-for list="{{ segs }}" as="seg" hint-placeholder-count="3">
+                <button data-seg type="button" onClick="{{ seg.onClick }}" aria-selected="{{ seg.active }}" style="{{ seg.style }}">{{ seg.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <sc-for list="{{ sections }}" as="section" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:16px;margin:36px 0 18px">
+              <div style="flex:1;border-top:1px dashed var(--maestro-ink-3)"></div>
+              <div style="display:flex;align-items:center;gap:9px;font-family:var(--font-mono);font-size:12px;color:var(--fg-3);white-space:nowrap">
+                <span style="color:var(--fg-2)">{{ section.label }}</span>
+                <span style="opacity:0.4">·</span>
+                <span>{{ section.count }} tools</span>
+              </div>
+              <div style="flex:1;border-top:1px dashed var(--maestro-ink-3)"></div>
+            </div>
+
+            <sc-if value="{{ isTrack }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <sc-for list="{{ section.apps }}" as="app" hint-placeholder-count="2">
+                  <button data-app-card type="button" disabled="{{ app.disabled }}" onClick="{{ app.onOpen }}" style="display:flex;align-items:center;gap:16px;width:100%;text-align:left;background:var(--bg-surface);border:1px solid var(--maestro-ink-3);border-radius:var(--radius-l);padding:15px 16px;color:inherit;font-family:inherit">
+                    <span style="{{ app.tileStyle }}">{{ app.iconEl }}</span>
+                    <span style="display:flex;flex-direction:column;gap:5px;flex:1;min-width:0">
+                      <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                        <span style="font-family:var(--font-mono);font-size:12px;color:var(--fg-3)">{{ app.code }}</span>
+                        <span style="color:var(--fg-3);opacity:0.5">·</span>
+                        <span style="font-family:var(--font-display);font-weight:600;font-size:16px;color:var(--fg-2)">{{ app.title }}</span>
+                        <sc-if value="{{ app.statusLabel }}"><span style="{{ app.badgeStyle }}">{{ app.statusLabel }}</span></sc-if>
+                      </span>
+                      <sc-if value="{{ app.hasDesc }}"><span style="font-family:var(--font-text);font-size:13px;line-height:1.5;color:var(--fg-3)">{{ app.description }}</span></sc-if>
+                    </span>
+                    <span data-kebab role="button" tabindex="0" onClick="{{ app.onMenu }}" aria-label="More options" style="flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;color:var(--fg-3)">{{ dotsIcon }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isGrid }}">
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:12px">
+                <sc-for list="{{ section.apps }}" as="app" hint-placeholder-count="3">
+                  <button data-app-card type="button" disabled="{{ app.disabled }}" onClick="{{ app.onOpen }}" style="display:flex;flex-direction:column;gap:14px;text-align:left;background:var(--bg-surface);border:1px solid var(--maestro-ink-3);border-radius:var(--radius-l);padding:18px;color:inherit;font-family:inherit;min-height:158px">
+                    <span style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+                      <span style="{{ app.tileStyle }}">{{ app.iconEl }}</span>
+                      <sc-if value="{{ app.statusLabel }}"><span style="{{ app.badgeStyle }}">{{ app.statusLabel }}</span></sc-if>
+                    </span>
+                    <span style="display:flex;flex-direction:column;gap:6px;flex:1">
+                      <span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3);letter-spacing:0.04em">{{ app.code }}</span>
+                      <span style="font-family:var(--font-display);font-weight:600;font-size:17px;line-height:1.2;color:var(--fg-2)">{{ app.title }}</span>
+                      <sc-if value="{{ app.hasDesc }}"><span style="font-family:var(--font-text);font-size:13px;line-height:1.5;color:var(--fg-3)">{{ app.description }}</span></sc-if>
+                    </span>
+                    <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.03em;color:var(--fg-3)">{{ app.openLabel }}<span style="display:inline-flex;width:14px;height:14px">{{ arrowIcon }}</span></span>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isCompact }}">
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(278px,1fr));gap:8px">
+                <sc-for list="{{ section.apps }}" as="app" hint-placeholder-count="3">
+                  <button data-app-card type="button" disabled="{{ app.disabled }}" onClick="{{ app.onOpen }}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--bg-surface);border:1px solid var(--maestro-ink-3);border-radius:var(--radius-m);padding:10px 12px;color:inherit;font-family:inherit">
+                    <span style="{{ app.tileStyleSm }}">{{ app.iconElSm }}</span>
+                    <span style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+                      <span style="font-family:var(--font-display);font-weight:600;font-size:14px;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ app.title }}</span>
+                      <sc-if value="{{ app.statusLabel }}"><span style="{{ app.badgeStyle }}">{{ app.statusLabel }}</span></sc-if>
+                    </span>
+                    <span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3);flex:0 0 auto">{{ app.code }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isApp }}">
+        <div>
+          <button data-btn="ghost" type="button" onClick="{{ goHome }}" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:none;color:var(--fg-3);font-family:var(--font-mono);font-size:12px;cursor:pointer;padding:0;margin-bottom:20px">
+            <span style="display:inline-flex;width:15px;height:15px">{{ chevronLeftEl }}</span>Back to apps
+          </button>
+
+          <div style="display:flex;gap:18px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap">
+            <div style="display:flex;gap:16px;align-items:flex-start;min-width:0">
+              <span style="{{ screen.bigTileStyle }}">{{ screen.iconEl }}</span>
+              <div style="min-width:0">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+                  <span style="font-family:var(--font-mono);font-size:12px;color:var(--fg-3)">{{ screen.code }}</span>
+                  <sc-if value="{{ screen.statusLabel }}"><span style="{{ screen.badgeStyle }}">{{ screen.statusLabel }}</span></sc-if>
+                </div>
+                <h1 style="font-family:var(--font-display);font-weight:600;font-size:30px;line-height:1.1;letter-spacing:-0.01em;margin:0 0 8px;color:var(--fg-2)">{{ screen.title }}</h1>
+                <p style="font-family:var(--font-text);font-size:15px;line-height:1.55;color:var(--fg-3);margin:0;max-width:540px">{{ screen.description }}</p>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button data-btn="secondary" type="button" onClick="{{ screen.onSecondary }}" style="{{ btnSecondary }}">{{ screen.secondary }}</button>
+              <button data-btn="accent" type="button" onClick="{{ screen.onPrimary }}" style="{{ btnAccent }}">{{ screen.primary }}</button>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:0;border-bottom:1px solid var(--maestro-ink-3);margin:26px 0 24px">
+            <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+              <button data-tab type="button" onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+              <div style="flex:1 1 360px;min-width:0;display:flex;flex-direction:column;gap:16px">
+                <div style="background:var(--bg-surface);border:1px solid var(--maestro-ink-3);border-radius:var(--radius-l);padding:24px">
+                  <h2 style="font-family:var(--font-display);font-weight:600;font-size:18px;margin:0 0 8px;color:var(--fg-2)">{{ screen.introHeading }}</h2>
+                  <p style="font-family:var(--font-text);font-size:14px;line-height:1.55;color:var(--fg-3);margin:0 0 18px;max-width:440px">{{ screen.intro }}</p>
+                  <button data-btn="primary" type="button" onClick="{{ screen.onPrimary }}" style="{{ btnPrimary }}">{{ screen.primary }}<span style="display:inline-flex;width:15px;height:15px">{{ arrowIcon }}</span></button>
+                </div>
+                <div>
+                  <p style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--fg-3);margin:0 0 12px">What's inside</p>
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <sc-for list="{{ screen.links }}" as="lk" hint-placeholder-count="3">
+                      <button data-app-card type="button" onClick="{{ lk.onClick }}" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--bg-surface);border:1px solid var(--maestro-ink-3);border-radius:var(--radius-m);padding:12px 14px;color:inherit;font-family:inherit">
+                        <span style="display:flex;align-items:center;justify-content:center;flex:0 0 auto;width:34px;height:34px;border-radius:8px;background:var(--maestro-ink-3);color:var(--maestro-paper-3)">{{ lk.iconEl }}</span>
+                        <span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0">
+                          <span style="font-family:var(--font-display);font-weight:600;font-size:14px;color:var(--fg-2)">{{ lk.title }}</span>
+                          <span style="font-family:var(--font-text);font-size:12px;color:var(--fg-3)">{{ lk.desc }}</span>
+                        </span>
+                        <span style="display:inline-flex;width:16px;height:16px;color:var(--fg-3);flex:0 0 auto">{{ chevronRightEl }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+              <aside style="flex:1 1 240px;max-width:320px;background:var(--bg-surface);border:1px solid var(--maestro-ink-3);border-radius:var(--radius-l);padding:20px;display:flex;flex-direction:column;gap:16px">
+                <p style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--fg-3);margin:0">About</p>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;justify-content:space-between;gap:12px">
+                    <span style="color:var(--fg-3);font-family:var(--font-text);font-size:13px">Area</span>
+                    <span style="color:var(--fg-2);font-family:var(--font-text);font-size:13px">{{ screen.area }}</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;gap:12px">
+                    <span style="color:var(--fg-3);font-family:var(--font-text);font-size:13px">Status</span>
+                    <span style="color:var(--fg-2);font-family:var(--font-text);font-size:13px">{{ screen.statusText }}</span>
+                  </div>
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--maestro-ink-3);padding-top:14px">
+                  <sc-for list="{{ screen.tags }}" as="tg" hint-placeholder-count="2">
+                    <span style="font-family:var(--font-mono);font-size:11px;line-height:18px;padding:0 8px;border-radius:var(--radius-xs);background:var(--maestro-ink-3);color:var(--fg-3)">{{ tg }}</span>
+                  </sc-for>
+                </div>
+              </aside>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isEmptyTab }}">
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:72px 24px;border:1px dashed var(--maestro-ink-3);border-radius:var(--radius-l);background:var(--bg-surface)">
+              <span style="display:inline-flex;width:28px;height:28px;color:var(--fg-3);margin-bottom:14px">{{ emptyIcon }}</span>
+              <p style="font-family:var(--font-display);font-weight:600;font-size:16px;color:var(--fg-2);margin:0 0 6px">Nothing here yet</p>
+              <p style="font-family:var(--font-text);font-size:13px;line-height:1.5;color:var(--fg-3);margin:0;max-width:320px">Start with a single idea — this space fills in as you go.</p>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+    </main>
+  </div>
+
+  <sc-if value="{{ toast }}">
+    <div style="position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--maestro-ink-2);border:1px solid var(--maestro-ink-3);color:var(--fg-1);font-family:var(--font-mono);font-size:12px;padding:10px 16px;border-radius:var(--radius-pill);box-shadow:var(--shadow-3);animation:toastIn var(--dur-base) var(--ease-out);z-index:60;max-width:88vw;text-align:center">{{ toast }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:900},&quot;defaultView&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;track&quot;,&quot;grid&quot;,&quot;compact&quot;],&quot;default&quot;:&quot;track&quot;,&quot;tsType&quot;:&quot;'track'|'grid'|'compact'&quot;,&quot;section&quot;:&quot;Layout&quot;},&quot;showDescriptions&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Layout&quot;},&quot;showStatusBadges&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Layout&quot;}}">
+class Component extends DCLogic {
+  state = { variant: null, toast: null, route: 'home', tab: 'overview', collapsed: false };
+
+  componentDidMount() {
+    this._auto = window.innerWidth < 900;
+    if (this._auto) this.setState({ collapsed: true });
+    this._onResize = () => {
+      const c = window.innerWidth < 900;
+      if (c !== this._auto) { this._auto = c; this.setState({ collapsed: c }); }
+    };
+    window.addEventListener('resize', this._onResize);
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this._onResize); clearTimeout(this._t); }
+
+  // ── Icon library (Lucide, 1.6px stroke) ──────────────────────────
+  ICONS = {
+    graduation: '<path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>',
+    clipboard: '<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
+    book: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+    bookpair: '<path d="M2 6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v13a1 1 0 0 1-1 1H4a2 2 0 0 1-2-2z"/><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5a1 1 0 0 1-1-1V6a2 2 0 0 1 2-2z"/>',
+    palette: '<circle cx="13.5" cy="6.5" r=".6" fill="currentColor" stroke="none"/><circle cx="17.5" cy="10.5" r=".6" fill="currentColor" stroke="none"/><circle cx="8.5" cy="7.5" r=".6" fill="currentColor" stroke="none"/><circle cx="6.5" cy="12.5" r=".6" fill="currentColor" stroke="none"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>',
+    flask: '<path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><path d="M5.58 16.5h12.85"/>',
+    sparkles: '<path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+    compass: '<path d="m16.24 7.76-1.8 5.41a2 2 0 0 1-1.27 1.27L7.76 16.24l1.8-5.41a2 2 0 0 1 1.27-1.27z"/><circle cx="12" cy="12" r="10"/>',
+    calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+    file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>',
+    card: '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>',
+    home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+    help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+    atom: '<circle cx="12" cy="12" r="1"/><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"/><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z"/>',
+    folder: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+    discussion: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+    trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+    globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+    store: '<path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/>',
+    wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+    lock: '<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+    panel: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/>',
+    dots: '<circle cx="12" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.4" fill="currentColor" stroke="none"/>',
+    arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+    chevronR: '<path d="m9 18 6-6-6-6"/>',
+    chevronL: '<path d="m15 18-6-6 6-6"/>',
+    search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+    inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+    download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+    play: '<polygon points="6 3 20 12 6 21 6 3"/>'
+  };
+
+  ACCENTS = {
+    evergreen: { tile: 'rgba(165,219,109,0.14)', fg: '#CEF585' },
+    lavender:  { tile: 'rgba(128,143,240,0.16)', fg: '#A6B2F7' },
+    sunset:    { tile: 'rgba(236,103,61,0.16)',  fg: '#FF8B62' }
+  };
+
+  STATUS = {
+    new:         { label: 'New',         style: { background: '#CEF585', color: '#1A3426', border: '1px solid transparent' } },
+    beta:        { label: 'Beta',        style: { background: 'rgba(128,143,240,0.18)', color: '#A6B2F7', border: '1px solid rgba(128,143,240,0.45)' } },
+    updated:     { label: 'Updated',     style: { background: 'rgba(236,103,61,0.16)', color: '#FF8B62', border: '1px solid rgba(236,103,61,0.45)' } },
+    locked:      { label: 'Locked',      style: { background: 'transparent', color: 'var(--fg-3)', border: '1px solid var(--maestro-ink-3)' } },
+    maintenance: { label: 'Maintenance', style: { background: 'transparent', color: 'var(--fg-3)', border: '1px solid var(--maestro-ink-3)' } }
+  };
+
+  // ── App catalogue — add an object here, a card appears. No UI code. ─
+  SECTIONS = [
+    { id: 'learn', label: 'Learn', apps: [
+      { id: 'course-player', code: 'PLAY', title: 'Course player', icon: 'graduation', accent: 'lavender', description: 'Pick up where you left off in your current track.' },
+      { id: 'assignments',   code: 'WORK', title: 'Assignments',   icon: 'clipboard',  accent: 'sunset',   description: 'Submit work and follow feedback from reviewers.', status: 'updated' },
+      { id: 'library',       code: 'LIB',  title: 'Library',       icon: 'book',       accent: 'evergreen', description: 'Readings, references and saved resources.' }
+    ]},
+    { id: 'build', label: 'Build', apps: [
+      { id: 'studio',  code: 'STD', title: 'Studio',   icon: 'palette',  accent: 'evergreen', description: 'Your project workspace for built work.' },
+      { id: 'sandbox', code: 'LAB', title: 'Sandbox',  icon: 'flask',    accent: 'lavender',  description: 'Experiment freely — nothing here is graded.', status: 'beta' },
+      { id: 'ai-tutor', code: 'AI', title: 'AI tutor', icon: 'sparkles', accent: 'sunset',    description: 'Ask anything, get unstuck, go deeper.', status: 'new' }
+    ]},
+    { id: 'connect', label: 'Connect', apps: [
+      { id: 'cohort',     code: 'CHT', title: 'Cohort',     icon: 'users',    accent: 'lavender',  description: 'Your people — message and meet your peers.' },
+      { id: 'mentorship', code: 'MTR', title: 'Mentorship', icon: 'compass',  accent: 'evergreen' },
+      { id: 'events',     code: 'EVT', title: 'Events',     icon: 'calendar', accent: 'sunset',    description: 'Workshops, critiques and studio hours.' }
+    ]},
+    { id: 'records', label: 'Records', apps: [
+      { id: 'transcript', code: 'TRN', title: 'Transcript', icon: 'file', accent: 'lavender', description: 'Your verified record of progress.', status: 'locked', disabled: true },
+      { id: 'billing',    code: 'BIL', title: 'Billing',    icon: 'card', accent: 'sunset',   description: 'Temporarily offline while we make updates.', status: 'maintenance', disabled: true }
+    ]}
+  ];
+
+  // ── Per-app screen content (opened-app workspace) ─────────────────
+  SCREEN_CONTENT = {
+    'course-player': { introHeading: 'Pick up where you left off', intro: 'Resume your current lesson and keep your momentum going.', primary: 'Continue lesson', links: [['bookpair', 'Syllabus', 'The full path for this track'], ['file', 'Notes', 'Your highlights and saved notes'], ['download', 'Downloads', 'Offline materials']] },
+    'assignments':   { introHeading: 'Your open work', intro: 'Track what is due, submit deliverables and read reviewer feedback in one place.', primary: 'View tasks', links: [['clipboard', 'Open tasks', 'What needs your attention'], ['file', 'Submitted', 'Everything you have turned in'], ['discussion', 'Feedback', 'Notes from your reviewers']] },
+    'library':       { introHeading: 'Find something to read', intro: 'Curated readings, references and the things you have saved for later.', primary: 'Browse library', links: [['bookpair', 'Reading lists', 'Curated by your mentors'], ['book', 'Saved', 'Your bookmarked resources'], ['compass', 'Recently viewed', 'Jump back in']] },
+    'studio':        { introHeading: 'Open your workspace', intro: 'Your studio is where built work lives — files, builds and everything in progress.', primary: 'Open studio', links: [['folder', 'Files', 'Your working directory'], ['play', 'Builds', 'Recent runs and previews'], ['users', 'Share', 'Invite people to collaborate']] },
+    'sandbox':       { introHeading: 'Try something out', intro: 'A free space to experiment — nothing here is graded, so go wide.', primary: 'New sandbox', links: [['flask', 'Recent', 'Pick up an experiment'], ['folder', 'Templates', 'Start from a scaffold'], ['file', 'Docs', 'How the sandbox works']] },
+    'ai-tutor':      { introHeading: 'Ask anything', intro: 'Get unstuck, go deeper on an idea, or talk through your work with your tutor.', primary: 'Start a chat', links: [['sparkles', 'New chat', 'Begin a fresh conversation'], ['discussion', 'History', 'Revisit past chats'], ['file', 'Prompts', 'Starting points to try']] },
+    'cohort':        { introHeading: 'Your people', intro: 'Message your peers, find your channels and see what the cohort is up to.', primary: 'Open cohort', links: [['users', 'Members', 'Who is in your cohort'], ['discussion', 'Channels', 'Conversations by topic'], ['calendar', 'Calendar', 'Shared cohort events']] },
+    'mentorship':    { introHeading: 'Meet your mentor', intro: 'Book time, prepare topics and keep notes from every session.', primary: 'Book a session', links: [['calendar', 'Upcoming', 'Your next sessions'], ['users', 'Mentors', 'Browse and request'], ['file', 'Notes', 'Session takeaways']] },
+    'events':        { introHeading: 'What is coming up', intro: 'Workshops, critiques and studio hours — see what is on and register.', primary: 'See schedule', links: [['calendar', 'This week', 'Happening now'], ['clipboard', 'Register', 'Save your spot'], ['compass', 'Past', 'Recordings and recaps']] },
+    'services':      { introHeading: 'How can we help?', intro: 'Help, support and account services for your Maestro workspace.', primary: 'Contact support', links: [['book', 'Help center', 'Guides and FAQs'], ['discussion', 'Tickets', 'Your support requests'], ['wrench', 'Status', 'System and account status']] }
+  };
+
+  NAV_A = [
+    { id: 'home', name: 'Home', icon: 'home' },
+    { id: 'learn', name: 'Learn', icon: 'bookpair', locked: true },
+    { id: 'services', name: 'Services', icon: 'help' }
+  ];
+  NAV_B = [
+    { id: 'practice', name: 'Practice', icon: 'atom', locked: true },
+    { id: 'projects', name: 'Projects', icon: 'folder', locked: true },
+    { id: 'discussions', name: 'Discussions', icon: 'discussion', locked: true },
+    { id: 'leaderboards', name: 'Leaderboards', icon: 'trophy', locked: true },
+    { id: 'community', name: 'Community', icon: 'globe', locked: true },
+    { id: 'shop', name: 'Shop', icon: 'store', locked: true }
+  ];
+
+  badgeBase = { fontFamily: 'var(--font-mono)', fontSize: 10, lineHeight: '15px', padding: '1px 7px', borderRadius: 2, letterSpacing: '0.04em', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap', flex: '0 0 auto' };
+
+  icon(name, size) {
+    size = size || 22;
+    const body = this.ICONS[name] || '';
+    return React.createElement('span', {
+      style: { display: 'inline-flex', width: size, height: size },
+      dangerouslySetInnerHTML: { __html: '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + body + '</svg>' }
+    });
+  }
+  tile(acc, size) {
+    return { display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto', width: size, height: size, borderRadius: size >= 52 ? 12 : size >= 44 ? 10 : 8, background: acc.tile, color: acc.fg };
+  }
+  findApp(id) {
+    let found = null, label = '';
+    this.SECTIONS.forEach(s => s.apps.forEach(a => { if (a.id === id) { found = a; label = s.label; } }));
+    return found ? { app: found, label } : null;
+  }
+
+  // ── Placeholder actions — wire these to real routing later ────────
+  toast(msg) { this.setState({ toast: msg }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: null }), 2600); }
+  navTo(label) { console.log('[TODO] navigate:', label); this.toast(label + ' — TODO: not wired up yet'); }
+  openApp(app) { console.log('[TODO] open app:', app.id); this.setState({ route: app.id, tab: 'overview' }); }
+  openMenu(app) { console.log('[TODO] menu:', app.id); this.toast('“' + app.title + '” options — TODO: context menu'); }
+  goHome() { this.setState({ route: 'home' }); }
+  lockedClick(name) { this.toast(name + ' is locked — coming soon'); }
+
+  btnBase = { fontFamily: 'var(--font-ui)', fontSize: 14, padding: '10px 18px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap', border: '1px solid transparent' };
+
+  renderVals() {
+    const showDesc = this.props.showDescriptions ?? true;
+    const showBadge = this.props.showStatusBadges ?? true;
+    const variant = this.state.variant ?? (this.props.defaultView ?? 'track');
+    const route = this.state.route;
+    const tab = this.state.tab;
+    const collapsed = this.state.collapsed;
+    const isHome = route === 'home';
+
+    // ── Dashboard data ──
+    const enrich = (app) => {
+      const acc = this.ACCENTS[app.accent] || this.ACCENTS.evergreen;
+      const st = (showBadge && app.status) ? this.STATUS[app.status] : null;
+      const disabled = !!app.disabled;
+      return {
+        code: app.code, title: app.title, description: app.description,
+        hasDesc: !!app.description && showDesc, disabled,
+        iconEl: this.icon(app.icon, 22), iconElSm: this.icon(app.icon, 18),
+        tileStyle: this.tile(acc, 44), tileStyleSm: this.tile(acc, 34),
+        statusLabel: st ? st.label : null,
+        badgeStyle: st ? Object.assign({}, this.badgeBase, st.style) : this.badgeBase,
+        openLabel: disabled ? 'Unavailable' : 'Open',
+        onOpen: disabled ? undefined : () => this.openApp(app),
+        onMenu: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.openMenu(app); }
+      };
+    };
+    const sections = this.SECTIONS.map(s => ({ id: s.id, label: s.label, count: s.apps.length, apps: s.apps.map(enrich) }));
+
+    const segBase = { fontFamily: 'var(--font-ui)', fontSize: 13, padding: '6px 16px', borderRadius: 'var(--radius-pill)', border: 'none', background: 'transparent', color: 'var(--fg-3)', cursor: 'pointer', whiteSpace: 'nowrap' };
+    const segActive = { background: 'var(--maestro-paper-3)', color: 'var(--maestro-ink)' };
+    const segs = [['track', 'Track'], ['grid', 'Grid'], ['compact', 'Compact']].map(([key, label]) => ({
+      key, label, active: variant === key, onClick: () => this.setState({ variant: key }),
+      style: variant === key ? Object.assign({}, segBase, segActive) : segBase
+    }));
+
+    // ── Sidebar ──
+    const activeId = route === 'services' ? 'services' : 'home';
+    const navRow = (item) => {
+      const active = item.id === activeId;
+      const style = {
+        display: 'flex', alignItems: 'center', gap: 12, width: '100%',
+        padding: collapsed ? '10px' : '9px 12px', borderRadius: 10,
+        background: active ? 'var(--maestro-ink-2)' : 'transparent', border: 'none',
+        color: item.locked ? 'var(--maestro-muted)' : (active ? 'var(--maestro-paper)' : 'var(--maestro-paper-3)'),
+        cursor: item.locked ? 'not-allowed' : 'pointer', font: 'inherit',
+        justifyContent: collapsed ? 'center' : 'flex-start', textAlign: 'left'
+      };
+      return {
+        name: item.name, locked: !!item.locked, lockedStr: item.locked ? 'true' : 'false',
+        iconEl: this.icon(item.icon, 20), style,
+        labelStyle: collapsed ? { display: 'none' } : { flex: 1, fontFamily: 'var(--font-ui)', fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+        lockStyle: collapsed ? { display: 'none' } : { display: 'inline-flex', width: 13, height: 13, flex: '0 0 auto', color: 'var(--maestro-muted)' },
+        onClick: item.locked ? () => this.lockedClick(item.name) : (item.id === 'home' ? () => this.goHome() : () => this.setState({ route: item.id, tab: 'overview' }))
+      };
+    };
+    const navA = this.NAV_A.map(navRow);
+    const navB = this.NAV_B.map(navRow);
+
+    const sidebarStyle = { position: 'sticky', top: 0, alignSelf: 'flex-start', height: '100vh', flex: '0 0 auto', width: collapsed ? 64 : 260, background: 'var(--maestro-ink)', borderRight: '1px solid var(--maestro-ink-3)', display: 'flex', flexDirection: 'column', padding: '16px 10px', transition: 'width var(--dur-base) var(--ease-out)', overflow: 'hidden', zIndex: 30 };
+    const brandRowStyle = collapsed
+      ? { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2px 0', marginBottom: 14, minHeight: 30 }
+      : { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '2px 4px 2px 6px', marginBottom: 14, minHeight: 30 };
+    const workspaceStyle = { display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: collapsed ? '10px' : '10px 12px', borderRadius: 10, background: 'var(--maestro-ink-3)', border: '1px solid var(--maestro-ink-3)', color: 'var(--maestro-paper-3)', cursor: 'pointer', font: 'inherit', justifyContent: collapsed ? 'center' : 'flex-start' };
+    const profileStyle = { display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: collapsed ? '8px' : '8px 8px', marginTop: 8, borderRadius: 10, background: 'transparent', border: 'none', cursor: 'pointer', font: 'inherit', justifyContent: collapsed ? 'center' : 'flex-start', textAlign: 'left' };
+
+    // ── Breadcrumb ──
+    let crumbs;
+    const crumbStyleCur = { color: 'var(--fg-1)', textDecoration: 'none', whiteSpace: 'nowrap' };
+    const crumbStyleLink = { color: 'var(--fg-3)', textDecoration: 'none', whiteSpace: 'nowrap' };
+    const noop = (e) => { if (e && e.preventDefault) e.preventDefault(); };
+    if (isHome) {
+      crumbs = [
+        { label: 'Programs', sep: false, style: crumbStyleLink, onClick: (e) => { noop(e); this.navTo('Programs'); } },
+        { label: 'Apps', sep: true, style: crumbStyleCur, onClick: noop }
+      ];
+    } else {
+      const meta = this.findApp(route);
+      const title = meta ? meta.app.title : (route === 'services' ? 'Services' : route);
+      crumbs = [
+        { label: 'Programs', sep: false, style: crumbStyleLink, onClick: (e) => { noop(e); this.navTo('Programs'); } },
+        { label: 'Apps', sep: true, style: crumbStyleLink, onClick: (e) => { noop(e); this.goHome(); } },
+        { label: title, sep: true, style: crumbStyleCur, onClick: noop }
+      ];
+    }
+
+    // ── Opened-app screen ──
+    let screen = null, tabs = [], isOverview = true, isEmptyTab = false;
+    if (!isHome) {
+      const meta = this.findApp(route);
+      let app = meta ? meta.app : null, label = meta ? meta.label : '';
+      if (!app && route === 'services') { app = { id: 'services', code: 'SVC', title: 'Services', icon: 'help', accent: 'lavender', description: 'Help, support and account services for your Maestro workspace.' }; label = 'Support'; }
+      if (app) {
+        const acc = this.ACCENTS[app.accent] || this.ACCENTS.evergreen;
+        const st = app.status ? this.STATUS[app.status] : null;
+        const c = this.SCREEN_CONTENT[app.id] || { introHeading: 'Get started', intro: 'Open ' + app.title + ' to begin.', primary: 'Open ' + app.title, links: [] };
+        screen = {
+          code: app.code, title: app.title, description: app.description,
+          iconEl: this.icon(app.icon, 28), bigTileStyle: this.tile(acc, 56),
+          statusLabel: st ? st.label : null,
+          badgeStyle: st ? Object.assign({}, this.badgeBase, st.style) : this.badgeBase,
+          introHeading: c.introHeading, intro: c.intro,
+          primary: c.primary, secondary: c.secondary || 'Settings',
+          links: (c.links || []).map(([ic, t, d]) => ({ iconEl: this.icon(ic, 18), title: t, desc: d, onClick: () => this.navTo(t) })),
+          area: label, statusText: st ? st.label : 'Available',
+          tags: [label.toLowerCase(), 'lms'],
+          onPrimary: () => this.navTo(app.title + ' · ' + c.primary),
+          onSecondary: () => this.navTo(app.title + ' settings')
+        };
+        const tabBase = { background: 'transparent', border: 'none', borderBottom: '2px solid transparent', padding: '10px 2px', marginRight: 22, marginBottom: -1, cursor: 'pointer', color: 'var(--fg-3)', fontFamily: 'var(--font-ui)', fontSize: 14 };
+        const tabActive = { color: 'var(--fg-1)', borderBottom: '2px solid var(--maestro-paper-3)' };
+        tabs = [['overview', 'Overview'], ['activity', 'Activity'], ['resources', 'Resources']].map(([key, lab]) => ({
+          label: lab, onClick: () => this.setState({ tab: key }),
+          style: tab === key ? Object.assign({}, tabBase, tabActive) : tabBase
+        }));
+        isOverview = tab === 'overview';
+        isEmptyTab = !isOverview;
+      }
+    }
+
+    return {
+      // dashboard
+      sections, segs, isHome, isApp: !isHome && !!screen,
+      isTrack: variant === 'track', isGrid: variant === 'grid', isCompact: variant === 'compact',
+      // sidebar
+      navA, navB, sidebarStyle, brandRowStyle, workspaceStyle, profileStyle, collapsed, expanded: !collapsed,
+      logoTitle: collapsed ? 'Expand sidebar' : 'Home',
+      onLogoClick: (e) => { if (e && e.preventDefault) e.preventDefault(); if (this.state.collapsed) this.setState({ collapsed: false }); else this.goHome(); },
+      brandWordStyle: { fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 18, color: 'var(--maestro-paper-3)', whiteSpace: 'nowrap', display: collapsed ? 'none' : 'inline' },
+      labelStyle: collapsed ? { display: 'none' } : { flex: 1, fontFamily: 'var(--font-ui)', fontSize: 14, color: 'inherit' },
+      profileTextStyle: collapsed ? { display: 'none' } : { display: 'flex', flexDirection: 'column', minWidth: 0, gap: 1 },
+      // screen
+      screen, tabs, isOverview, isEmptyTab, crumbs,
+      // icons
+      wrenchIcon: this.icon('wrench', 20), panelIcon: this.icon('panel', 18), lockIcon: this.icon('lock', 13),
+      searchIcon: this.icon('search', 18), dotsIcon: this.icon('dots', 18), arrowIcon: this.icon('arrow', 14),
+      chevronRightEl: this.icon('chevronR', 14), chevronLeftEl: this.icon('chevronL', 15), emptyIcon: this.icon('inbox', 28),
+      // button styles
+      btnPrimary: Object.assign({}, this.btnBase, { background: 'var(--maestro-paper-3)', color: 'var(--maestro-ink)' }),
+      btnAccent: Object.assign({}, this.btnBase, { background: 'var(--evergreen-500)', color: 'var(--evergreen-900)' }),
+      btnSecondary: Object.assign({}, this.btnBase, { background: 'transparent', color: 'var(--fg-1)', border: '1px solid var(--maestro-ink-3)' }),
+      // actions
+      toast: this.state.toast,
+      onSearch: () => this.navTo('Search'),
+      onWorkspace: () => this.navTo('LMS workspace'),
+      onProfile: () => this.navTo('Your profile'),
+      toggleCollapse: () => this.setState({ collapsed: !this.state.collapsed }),
+      goHome: () => this.goHome(),
+      goHomeLink: (e) => { if (e && e.preventDefault) e.preventDefault(); this.goHome(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,314 @@
+/* ──────────────────────────────────────────────────────────────────
+   Maestro Design System — colors & type tokens
+   Source of truth: AI Hackton.fig (extracted)
+   ────────────────────────────────────────────────────────────────── */
+
+/* ── Webfonts ────────────────────────────────────────────────────── */
+
+@font-face {
+  font-family: "Wix Madefor Display";
+  src: url("./fonts/WixMadeforDisplay-Regular.ttf") format("truetype");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Wix Madefor Display";
+  src: url("./fonts/WixMadeforDisplay-SemiBold.ttf") format("truetype");
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Wix Madefor Display";
+  src: url("./fonts/WixMadeforDisplay-Bold.ttf") format("truetype");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Wix Madefor Display";
+  src: url("./fonts/WixMadeforDisplay-ExtraBold.ttf") format("truetype");
+  font-weight: 800; font-style: normal; font-display: swap;
+}
+
+@font-face {
+  font-family: "Wix Madefor Text";
+  src: url("./fonts/WixMadeforText-VariableFont_wght.ttf") format("truetype-variations");
+  font-weight: 400 800; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Wix Madefor Text";
+  src: url("./fonts/WixMadeforText-Italic-VariableFont_wght.ttf") format("truetype-variations");
+  font-weight: 400 800; font-style: italic; font-display: swap;
+}
+
+@font-face {
+  font-family: "Editor's Note Text";
+  src: url("./fonts/EditorsNoteText-Regular.otf") format("opentype");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Editor's Note Text";
+  src: url("./fonts/EditorsNoteText-Italic.otf") format("opentype");
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: "Editor's Note Text";
+  src: url("./fonts/EditorsNoteText-Bold.otf") format("opentype");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Editor's Note Text";
+  src: url("./fonts/EditorsNoteText-Thin.otf") format("opentype");
+  font-weight: 200; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Editor's Note Text";
+  src: url("./fonts/EditorsNoteText-ThinItalic.otf") format("opentype");
+  font-weight: 200; font-style: italic; font-display: swap;
+}
+
+/* IBM Plex Mono / Sans — used for labels, tags, code snippets.
+   Loaded from Google Fonts so we don't ship more binaries. */
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap");
+
+/* ── Color tokens ─────────────────────────────────────────────────
+   Two palettes:
+   PRIMARY  — the everyday surface system. Dark stack + light stack.
+              98% of the design lives here.
+   SECONDARY— three accent ramps used SPARINGLY for emphasis,
+              illustration, charts, gradients. Never as default UI.
+   ────────────────────────────────────────────────────────────────── */
+:root {
+  /* Primary — dark stack */
+  --maestro-ink:        #0A0A0A;  /* default text + brand-dark surface */
+  --maestro-ink-2:      #232323;
+  --maestro-ink-3:      #343434;
+
+  /* Primary — light stack (only these three; nothing in between) */
+  --maestro-paper:      #FFFFFF;  /* card / surface */
+  --maestro-paper-2:    #F9F9F6;  /* page bg in light mode */
+  --maestro-paper-3:    #E2E1DA;  /* wash, divider, chip, stroke */
+
+  /* Neutral text on light */
+  --maestro-muted:      #858581;  /* secondary text */
+  --maestro-muted-2:    #757575;
+
+  /* Secondary — Evergreen ramp (dark → light) */
+  --evergreen-900: #1A3426;
+  --evergreen-500: #A5DB6D;
+  --evergreen-300: #CEF585;
+  --evergreen-200: #E0FFA5;
+  --evergreen-text-on-dark: #F7FFE5; /* tag on evergreen-900 */
+
+  /* Secondary — Lavender ramp */
+  --lavender-900: #211E48;
+  --lavender-500: #808FF0;
+  --lavender-300: #A6B2F7;
+  --lavender-200: #D4DBFC;
+
+  /* Secondary — Sunset ramp */
+  --sunset-900: #441F06;
+  --sunset-500: #EC673D;
+  --sunset-300: #FF8B62;
+  --sunset-200: #FFC3AB;
+
+  /* Signature gradient — used on hero accents, badges, chart fills */
+  --gradient-evergreen: linear-gradient(180deg, var(--evergreen-200) 0%, var(--evergreen-500) 100%);
+  --gradient-lavender:  linear-gradient(180deg, var(--lavender-200)  0%, var(--lavender-500)  100%);
+  --gradient-sunset:    linear-gradient(180deg, var(--sunset-200)   0%, var(--sunset-500)   100%);
+
+  /* ── Semantic — text ─────────────────────────────── */
+  --fg-1:        var(--maestro-ink);     /* primary text */
+  --fg-2:        var(--maestro-ink-2);   /* heading on light */
+  --fg-3:        var(--maestro-muted);   /* secondary / caption */
+  --fg-on-dark:  var(--maestro-paper-3); /* text on ink surfaces */
+  --fg-accent:   var(--evergreen-500);
+
+  /* ── Semantic — surface ──────────────────────────── */
+  --bg-page:     var(--maestro-paper-2);
+  --bg-surface:  var(--maestro-paper);
+  --bg-wash:     var(--maestro-paper-3);
+  --bg-chip:     var(--maestro-paper-3);
+  --bg-dark:     var(--maestro-ink);
+  --border-1:    var(--maestro-paper-3);
+  --border-soft: var(--maestro-paper-3);
+
+  /* ── Font families ───────────────────────────────── */
+  --font-display: "Wix Madefor Display", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-text:    "Wix Madefor Text", "Wix Madefor Display", system-ui, sans-serif;
+  --font-editorial: "Editor's Note Text", "Wix Madefor Display", Georgia, serif;
+  --font-mono:    "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-ui:      "IBM Plex Sans", "Wix Madefor Text", system-ui, sans-serif;
+
+  /* ── Type scale (per Figma + extended for product use) ──
+     Figma defined sample sizes only — the scale below extrapolates
+     to a usable steps system. Display is for titles, Text for body,
+     Editorial italic for emphasis / aspirational accents. */
+  --fs-display-2xl: 90px;   /* hero brand statement */
+  --fs-display-xl:  64px;
+  --fs-display-l:   48px;
+  --fs-display-m:   36px;
+  --fs-display-s:   24px;
+  --fs-h1:          36px;
+  --fs-h2:          24px;
+  --fs-h3:          18px;
+  --fs-body:        16px;
+  --fs-body-s:      14px;
+  --fs-caption:     12px;  /* floor — never set type smaller than this */
+
+  --lh-tight:   1.0;
+  --lh-snug:    1.15;
+  --lh-normal:  1.4;
+  --lh-relaxed: 1.6;
+
+  /* ── Shape / spacing / motion ─────────────────────── */
+  --radius-xs: 2px;   /* chips, tags */
+  --radius-s:  4px;
+  --radius-m:  8px;
+  --radius-l:  12px;
+  --radius-xl: 16px;
+  --radius-pill: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  --stroke-hair: 0.5px;
+  --stroke-1:    1px;
+  --stroke-2:    1.5px;
+
+  /* Subtle shadow system — Maestro stays mostly flat.
+     Shadows are reserved for floating menus / hover lift. */
+  --shadow-1: 0 1px 2px rgba(10,10,10,0.06);
+  --shadow-2: 0 4px 16px rgba(10,10,10,0.08);
+  --shadow-3: 0 12px 40px rgba(10,10,10,0.12);
+
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-in:  cubic-bezier(0.7, 0, 0.84, 0);
+  --dur-fast:   140ms;
+  --dur-base:   220ms;
+  --dur-slow:   420ms;
+}
+
+/* ── Dark-mode token swap (Maestro's signature inverted surface) ── */
+.maestro-dark, [data-theme="dark"] {
+  --fg-1: var(--maestro-paper-3);
+  --fg-2: var(--maestro-paper);
+  --fg-3: var(--maestro-muted);
+  --bg-page: var(--maestro-ink);
+  --bg-surface: var(--maestro-ink-2);
+  --bg-wash: var(--maestro-ink-3);
+  --bg-chip: var(--maestro-ink-3);
+  --border-1: var(--maestro-ink-3);
+  --border-soft: var(--maestro-ink-2);
+}
+
+/* ── Element styles ───────────────────────────────────────────────
+   Apply these on the page root once colors_and_type.css is linked. */
+html, body {
+  background: var(--bg-page);
+  color: var(--fg-1);
+  font-family: var(--font-text);
+  font-size: var(--fs-body);
+  line-height: var(--lh-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, .h1 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-h1);
+  line-height: var(--lh-snug);
+  letter-spacing: -0.01em;
+  color: var(--fg-1);
+  text-wrap: balance;
+}
+h2, .h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-snug);
+  letter-spacing: -0.005em;
+  color: var(--fg-1);
+}
+h3, .h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-snug);
+  color: var(--fg-1);
+}
+p {
+  font-family: var(--font-text);
+  font-size: var(--fs-body);
+  line-height: var(--lh-relaxed);
+  color: var(--fg-1);
+  text-wrap: pretty;
+}
+small, .caption {
+  font-size: var(--fs-caption);
+  color: var(--fg-3);
+  line-height: var(--lh-normal);
+}
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  color: var(--fg-1);
+}
+/* Editor's Note ships an alternate "s" at U+E204 in the Private Use
+   Area. ALWAYS use that glyph — never the default "s". The Display
+   card swaps it in via inline script; production code should either
+   write &#xE204; directly or run a small mount-time replace on every
+   element using `var(--font-editorial)`. */
+[style*="Editor"], [style*="--font-editorial"], em, .editorial,
+.brand-statement em, .program-title em, h1 em, h2 em, h3 em,
+blockquote em {
+  font-feature-settings: "ss02" 1;
+  font-variant-alternates: styleset(ss02);
+}
+em, .editorial {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  font-feature-settings: "ss02" 1;
+}
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--fs-display-l);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.brand-statement {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--fs-display-m);
+  line-height: 1.38;
+  letter-spacing: -0.01em;
+  color: var(--fg-1);
+  text-wrap: balance;
+}
+.brand-statement em {
+  font-family: var(--font-editorial);
+  font-style: italic;
+}
+.tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-xs);
+  background: var(--bg-chip);
+  color: var(--fg-3);
+  display: inline-block;
+}
+.label-ui {
+  font-family: var(--font-ui);
+  font-size: var(--fs-body-s);
+  letter-spacing: 0.01em;
+  color: var(--fg-1);
+}

@@ -1,0 +1,205 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap");
+
+@font-face {
+  font-family: "Wix Madefor Display";
+  src: url("/fonts/WixMadeforDisplay-Regular.ttf") format("truetype");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Wix Madefor Display";
+  src: url("/fonts/WixMadeforDisplay-SemiBold.ttf") format("truetype");
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Wix Madefor Display";
+  src: url("/fonts/WixMadeforDisplay-Bold.ttf") format("truetype");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Wix Madefor Display";
+  src: url("/fonts/WixMadeforDisplay-ExtraBold.ttf") format("truetype");
+  font-weight: 800; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Wix Madefor Text";
+  src: url("/fonts/WixMadeforText-VariableFont_wght.ttf") format("truetype-variations");
+  font-weight: 400 800; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Wix Madefor Text";
+  src: url("/fonts/WixMadeforText-Italic-VariableFont_wght.ttf") format("truetype-variations");
+  font-weight: 400 800; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: "Editor's Note Text";
+  src: url("/fonts/EditorsNoteText-Regular.otf") format("opentype");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Editor's Note Text";
+  src: url("/fonts/EditorsNoteText-Italic.otf") format("opentype");
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: "Editor's Note Text";
+  src: url("/fonts/EditorsNoteText-Bold.otf") format("opentype");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+
+/* ── Design tokens ───────────────────────────────────────────────── */
+:root {
+  --maestro-ink:     #0A0A0A;
+  --maestro-ink-2:   #232323;
+  --maestro-ink-3:   #343434;
+  --maestro-paper:   #FFFFFF;
+  --maestro-paper-2: #F9F9F6;
+  --maestro-paper-3: #E2E1DA;
+  --maestro-muted:   #858581;
+  --maestro-muted-2: #757575;
+
+  --evergreen-900: #1A3426;
+  --evergreen-500: #A5DB6D;
+  --evergreen-300: #CEF585;
+  --lavender-500:  #808FF0;
+  --lavender-300:  #A6B2F7;
+  --sunset-500:    #EC673D;
+  --sunset-300:    #FF8B62;
+
+  --fg-1:      var(--maestro-ink);
+  --fg-2:      var(--maestro-ink-2);
+  --fg-3:      var(--maestro-muted);
+  --bg-page:   var(--maestro-paper-2);
+  --bg-surface:var(--maestro-paper);
+  --bg-wash:   var(--maestro-paper-3);
+  --bg-chip:   var(--maestro-paper-3);
+  --border-1:  var(--maestro-paper-3);
+
+  --font-display:   "Wix Madefor Display", system-ui, -apple-system, sans-serif;
+  --font-text:      "Wix Madefor Text", "Wix Madefor Display", system-ui, sans-serif;
+  --font-editorial: "Editor's Note Text", Georgia, serif;
+  --font-mono:      "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-ui:        "IBM Plex Sans", "Wix Madefor Text", system-ui, sans-serif;
+
+  --radius-xs:   2px;
+  --radius-s:    4px;
+  --radius-m:    8px;
+  --radius-l:    12px;
+  --radius-xl:   16px;
+  --radius-pill: 999px;
+
+  --shadow-1: 0 1px 2px rgba(10,10,10,0.06);
+  --shadow-2: 0 4px 16px rgba(10,10,10,0.08);
+  --shadow-3: 0 12px 40px rgba(10,10,10,0.12);
+
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-in:  cubic-bezier(0.7, 0, 0.84, 0);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 420ms;
+}
+
+[data-theme="dark"] {
+  --fg-1:       var(--maestro-paper-3);
+  --fg-2:       var(--maestro-paper);
+  --fg-3:       var(--maestro-muted);
+  --bg-page:    var(--maestro-ink);
+  --bg-surface: var(--maestro-ink-2);
+  --bg-wash:    var(--maestro-ink-3);
+  --bg-chip:    var(--maestro-ink-3);
+  --border-1:   var(--maestro-ink-3);
+}
+
+/* ── Resets & base ───────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-text);
+  font-size: 16px;
+  line-height: 1.4;
+  background: var(--bg-page);
+  color: var(--fg-1);
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+a { text-decoration: none; }
+
+em {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-weight: 400;
+  font-feature-settings: "ss02" 1;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--maestro-ink-3);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+/* ── Interactive states ──────────────────────────────────────────── */
+.app-card {
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+.app-card:not(:disabled):hover {
+  background: var(--bg-wash) !important;
+  border-color: var(--maestro-muted-2) !important;
+}
+.app-card:not(:disabled):active { transform: scale(0.99); }
+.app-card:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.nav-btn {
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.nav-btn:not([data-locked="true"]):hover {
+  background: var(--maestro-ink-2) !important;
+  color: var(--maestro-paper) !important;
+}
+
+.kebab-btn {
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.kebab-btn:hover {
+  background: var(--maestro-ink-3) !important;
+  color: var(--fg-2) !important;
+}
+
+.action-btn {
+  transition: background var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
+}
+.action-btn:active { transform: scale(0.97); }
+.action-btn.primary:hover  { background: var(--maestro-paper) !important; }
+.action-btn.accent:hover   { background: var(--evergreen-300) !important; }
+.action-btn.secondary:hover { background: var(--maestro-ink-3) !important; }
+
+.seg-btn {
+  transition: color var(--dur-fast), background var(--dur-fast);
+}
+
+.tab-btn {
+  transition: color var(--dur-fast), border-color var(--dur-fast);
+}
+
+/* ── Toast animation ─────────────────────────────────────────────── */
+@keyframes toastIn {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
