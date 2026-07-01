@@ -1,0 +1,398 @@
+{
+  "id": "course-aws-cloud-fundamentals",
+  "title": "AWS Cloud Fundamentals",
+  "description": "A demo course that introduces cloud computing on AWS: what the cloud is, the core building blocks (compute, storage, networking), the shared responsibility model, and how pay-as-you-go pricing works.",
+  "goal": "Understand what cloud computing is on AWS and reason about which core service fits a simple scenario and who is responsible for what.",
+  "version": "1.0.0",
+  "units": [
+    {
+      "id": "aws-unit-1-what-is-cloud",
+      "title": "What Cloud Computing Is",
+      "goal": "Explain what cloud computing is and how renting on-demand resources differs from owning your own servers.",
+      "order": 1,
+      "teacherBrain": {
+        "persona": "A friendly cloud engineer who remembers what it was like to rack physical servers.",
+        "tone": "Approachable, concrete, jargon-light.",
+        "objectives": [
+          "Make the rent-vs-own mental model click.",
+          "Connect on-demand resources to elasticity and pay-as-you-go."
+        ],
+        "guidelines": [
+          "Use the 'electricity from the grid vs your own generator' analogy before technical detail.",
+          "Ask a short check question after each idea.",
+          "Ground explanations in the provided knowledge chunks."
+        ],
+        "constraints": [
+          "Do not dive into specific services yet — that is the next unit.",
+          "Avoid unexplained acronyms; expand them the first time.",
+          "Do not invent AWS pricing figures."
+        ],
+        "systemPromptSeed": "You are teaching the first unit. Assume the learner has used a computer but has never used a cloud platform."
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "aws-kb-1-1",
+          "unitId": "aws-unit-1-what-is-cloud",
+          "title": "Cloud = renting computing on demand",
+          "content": "Cloud computing means renting computing resources (servers, storage, databases) over the internet instead of buying and maintaining your own hardware. A provider like AWS owns the data centres; you request what you need, when you need it, and give it back when you're done.",
+          "tags": ["cloud", "on-demand", "rent", "data-center"],
+          "source": "course-author"
+        },
+        {
+          "id": "aws-kb-1-2",
+          "unitId": "aws-unit-1-what-is-cloud",
+          "title": "Elasticity: scale up and down",
+          "content": "A key benefit of the cloud is elasticity: you can add resources when demand spikes and remove them when it drops, within minutes. Owning hardware forces you to buy for peak demand and waste it the rest of the time.",
+          "tags": ["elasticity", "scaling", "demand", "capacity"],
+          "source": "course-author"
+        },
+        {
+          "id": "aws-kb-1-3",
+          "unitId": "aws-unit-1-what-is-cloud",
+          "title": "Pay-as-you-go",
+          "content": "Cloud pricing is usually pay-as-you-go: you pay for what you actually use (compute-hours, gigabytes stored, requests made) rather than a big up-front purchase. This turns a large fixed cost into a smaller variable cost that tracks usage.",
+          "tags": ["pay-as-you-go", "pricing", "variable-cost", "billing"],
+          "source": "course-author"
+        }
+      ],
+      "questions": [
+        {
+          "id": "aws-q-1-1",
+          "prompt": "Explain the difference between owning your own servers and using the cloud, using an everyday analogy.",
+          "type": "open",
+          "answer": "Owning servers is like buying your own generator (big up-front cost, fixed capacity); the cloud is like electricity from the grid (pay for what you use, scale on demand).",
+          "hints": [
+            { "id": "aws-q-1-1-h-1", "order": 1, "text": "Think about up-front cost vs paying for usage." },
+            { "id": "aws-q-1-1-h-2", "order": 2, "text": "Bring in elasticity — scaling up and down." }
+          ],
+          "difficulty": "beginner"
+        },
+        {
+          "id": "aws-q-1-2",
+          "prompt": "Which term describes adding capacity during a spike and removing it afterward?",
+          "type": "mcq",
+          "options": [
+            "Elasticity",
+            "Redundancy",
+            "Encryption",
+            "Latency"
+          ],
+          "answer": "Elasticity",
+          "hints": [
+            { "id": "aws-q-1-2-h-1", "order": 1, "text": "It's about scaling up and down with demand." }
+          ],
+          "difficulty": "beginner"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "aws-cm-1-1",
+          "mistake": "Thinking the cloud is just 'someone else's computer' with no other difference.",
+          "correction": "The defining benefits are on-demand elasticity and pay-as-you-go billing, not just remote hardware.",
+          "relatedQuestionId": "aws-q-1-1"
+        },
+        {
+          "id": "aws-cm-1-2",
+          "mistake": "Assuming the cloud is always cheaper.",
+          "correction": "It shifts fixed cost to variable cost and adds elasticity; whether it's cheaper depends on usage patterns."
+        }
+      ]
+    },
+    {
+      "id": "aws-unit-2-core-building-blocks",
+      "title": "Core Building Blocks: Compute, Storage, Networking",
+      "goal": "Identify the three core categories of AWS services and name a flagship service in each.",
+      "order": 2,
+      "teacherBrain": {
+        "persona": "A hands-on solutions architect who maps every service to a real-world job.",
+        "tone": "Clear, example-driven, structured.",
+        "objectives": [
+          "Have the learner sort services into compute, storage, and networking.",
+          "Attach one flagship AWS service to each category (EC2, S3, VPC)."
+        ],
+        "guidelines": [
+          "Introduce categories before specific service names.",
+          "Give one concrete use case per service.",
+          "Ground answers in the provided chunks; don't sprawl into dozens of services."
+        ],
+        "constraints": [
+          "Limit to the three core categories and their flagship services.",
+          "Do not go into configuration details or console click-paths.",
+          "Do not invent service names or capabilities."
+        ],
+        "systemPromptSeed": "The learner understands what the cloud is. Now give them a simple map of the three core building blocks."
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "aws-kb-2-1",
+          "unitId": "aws-unit-2-core-building-blocks",
+          "title": "Compute: EC2",
+          "content": "Compute services run your code and applications. The flagship is Amazon EC2 (Elastic Compute Cloud): virtual servers you launch on demand, choosing CPU and memory. Use EC2 when you need a general-purpose machine to run software, much like a computer in the cloud.",
+          "tags": ["compute", "ec2", "virtual-server", "instance"],
+          "source": "course-author"
+        },
+        {
+          "id": "aws-kb-2-2",
+          "unitId": "aws-unit-2-core-building-blocks",
+          "title": "Storage: S3",
+          "content": "Storage services keep your data. The flagship is Amazon S3 (Simple Storage Service): object storage for files like images, backups, and logs. You put objects into 'buckets' and retrieve them over the internet. S3 is durable and scales to virtually unlimited data.",
+          "tags": ["storage", "s3", "object-storage", "bucket"],
+          "source": "course-author"
+        },
+        {
+          "id": "aws-kb-2-3",
+          "unitId": "aws-unit-2-core-building-blocks",
+          "title": "Networking: VPC",
+          "content": "Networking services connect your resources and control traffic. The flagship is Amazon VPC (Virtual Private Cloud): your own isolated network in AWS where you place resources like EC2 instances and control what can reach them. Think of it as the private network your cloud resources live inside.",
+          "tags": ["networking", "vpc", "network", "isolation"],
+          "source": "course-author"
+        }
+      ],
+      "questions": [
+        {
+          "id": "aws-q-2-1",
+          "prompt": "You need to store thousands of user-uploaded photos and serve them over the web. Which core category and service fits best, and why?",
+          "type": "open",
+          "answer": "Storage — Amazon S3, because it's object storage designed for files like images, is durable, and scales to large amounts of data.",
+          "hints": [
+            { "id": "aws-q-2-1-h-1", "order": 1, "text": "Photos are files — which category handles data at rest?" },
+            { "id": "aws-q-2-1-h-2", "order": 2, "text": "Recall the flagship object-storage service." }
+          ],
+          "difficulty": "beginner"
+        },
+        {
+          "id": "aws-q-2-2",
+          "prompt": "Which AWS service provides on-demand virtual servers (compute)?",
+          "type": "mcq",
+          "options": [
+            "Amazon EC2",
+            "Amazon S3",
+            "Amazon VPC",
+            "Amazon Route 53"
+          ],
+          "answer": "Amazon EC2",
+          "hints": [
+            { "id": "aws-q-2-2-h-1", "order": 1, "text": "It stands for Elastic Compute Cloud." }
+          ],
+          "difficulty": "beginner"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "aws-cm-2-1",
+          "mistake": "Confusing S3 (storage) with EC2 (compute).",
+          "correction": "S3 stores files as objects in buckets; EC2 runs virtual servers. Match the service to whether you need to store data or run code.",
+          "relatedQuestionId": "aws-q-2-1"
+        },
+        {
+          "id": "aws-cm-2-2",
+          "mistake": "Ignoring networking until something can't connect.",
+          "correction": "Resources live inside a VPC that controls traffic; plan the network alongside compute and storage."
+        }
+      ]
+    },
+    {
+      "id": "aws-unit-3-shared-responsibility",
+      "title": "The Shared Responsibility Model",
+      "goal": "Explain which security and operational responsibilities belong to AWS versus the customer.",
+      "order": 3,
+      "teacherBrain": {
+        "persona": "A security-minded cloud advisor who has seen breaches caused by wrong assumptions about responsibility.",
+        "tone": "Careful, clear, slightly cautionary.",
+        "objectives": [
+          "Have the learner split responsibilities into AWS's and the customer's.",
+          "Cement the 'security OF the cloud vs security IN the cloud' phrasing."
+        ],
+        "guidelines": [
+          "Use the 'of the cloud' vs 'in the cloud' split from the chunks.",
+          "Give concrete examples on each side.",
+          "Check understanding with a sorting question."
+        ],
+        "constraints": [
+          "Do not enumerate every compliance framework — keep it conceptual.",
+          "Do not overstate that AWS handles all security for the customer.",
+          "Do not invent breach statistics."
+        ],
+        "systemPromptSeed": "The learner knows the core services. Now teach who is responsible for what, which is a frequent source of real-world mistakes."
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "aws-kb-3-1",
+          "unitId": "aws-unit-3-shared-responsibility",
+          "title": "Security OF the cloud (AWS)",
+          "content": "AWS is responsible for security OF the cloud: the physical data centres, the hardware, the underlying network, and the software that runs the core services. Customers cannot see or manage these layers, and AWS secures them.",
+          "tags": ["shared-responsibility", "aws-responsibility", "infrastructure", "security"],
+          "source": "course-author"
+        },
+        {
+          "id": "aws-kb-3-2",
+          "unitId": "aws-unit-3-shared-responsibility",
+          "title": "Security IN the cloud (customer)",
+          "content": "The customer is responsible for security IN the cloud: their data, who can access it, how it's configured, operating-system patches on their EC2 instances, and their application code. Most cloud incidents come from customer misconfiguration, not AWS failures.",
+          "tags": ["shared-responsibility", "customer-responsibility", "configuration", "access"],
+          "source": "course-author"
+        },
+        {
+          "id": "aws-kb-3-3",
+          "unitId": "aws-unit-3-shared-responsibility",
+          "title": "The line shifts by service type",
+          "content": "The exact boundary depends on the service. With a raw EC2 instance the customer patches the OS; with a fully managed service (like a managed database) AWS handles more of the stack. The more managed the service, the less the customer must operate — but the customer always owns their data and access control.",
+          "tags": ["managed-service", "boundary", "ec2", "responsibility"],
+          "source": "course-author"
+        }
+      ],
+      "questions": [
+        {
+          "id": "aws-q-3-1",
+          "prompt": "Give one example of something AWS is responsible for and one thing the customer is responsible for.",
+          "type": "open",
+          "answer": "AWS: physical data centres / core infrastructure. Customer: their data, access permissions, OS patching on EC2, app configuration.",
+          "hints": [
+            { "id": "aws-q-3-1-h-1", "order": 1, "text": "Think 'OF the cloud' vs 'IN the cloud'." },
+            { "id": "aws-q-3-1-h-2", "order": 2, "text": "Who can touch the physical servers? Who controls the data?" }
+          ],
+          "difficulty": "beginner"
+        },
+        {
+          "id": "aws-q-3-2",
+          "prompt": "Who is responsible for configuring who can access your data in an S3 bucket?",
+          "type": "mcq",
+          "options": [
+            "The customer",
+            "AWS",
+            "No one — access is automatic",
+            "The internet service provider"
+          ],
+          "answer": "The customer",
+          "hints": [
+            { "id": "aws-q-3-2-h-1", "order": 1, "text": "Access control is 'security IN the cloud'." }
+          ],
+          "difficulty": "beginner"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "aws-cm-3-1",
+          "mistake": "Assuming AWS secures everything, including your data and access settings.",
+          "correction": "AWS secures the infrastructure; the customer must secure their data, access, and configuration.",
+          "relatedQuestionId": "aws-q-3-2"
+        },
+        {
+          "id": "aws-cm-3-2",
+          "mistake": "Believing the responsibility split is identical for every service.",
+          "correction": "The boundary shifts with how managed the service is, but the customer always owns their data and access."
+        }
+      ]
+    },
+    {
+      "id": "aws-unit-4-pricing-and-cost",
+      "title": "Pricing and Cost Awareness",
+      "goal": "Describe how pay-as-you-go pricing works and identify simple ways to avoid surprise bills.",
+      "order": 4,
+      "teacherBrain": {
+        "persona": "A cost-conscious cloud practitioner who has been burned by a forgotten running instance.",
+        "tone": "Practical, reassuring, budget-aware.",
+        "objectives": [
+          "Reinforce that you pay for provisioned/used resources over time.",
+          "Give the learner concrete habits to control cost."
+        ],
+        "guidelines": [
+          "Use a small worked example of an hourly resource left running.",
+          "Mention free-tier and budgets/alerts as safety nets.",
+          "Ground guidance in the chunks; keep numbers illustrative and generic."
+        ],
+        "constraints": [
+          "Do not quote specific current AWS prices — they change.",
+          "Do not promise the cloud is free beyond the general free-tier idea.",
+          "Do not invent exact dollar figures for services."
+        ],
+        "systemPromptSeed": "This is the final unit. The learner understands services and responsibilities; now make them cost-aware so a demo account doesn't surprise them."
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "aws-kb-4-1",
+          "unitId": "aws-unit-4-pricing-and-cost",
+          "title": "You pay for what you provision and use",
+          "content": "Most AWS costs come from resources you have provisioned or consumed: compute charged per second/hour a server runs, storage per gigabyte per month, and data transfer per gigabyte moved. Leaving a resource running when idle still costs money, because you provisioned it.",
+          "tags": ["pricing", "provisioned", "usage", "billing"],
+          "source": "course-author"
+        },
+        {
+          "id": "aws-kb-4-2",
+          "unitId": "aws-unit-4-pricing-and-cost",
+          "title": "Free tier and budgets",
+          "content": "AWS offers a free tier with limited monthly usage of many services for new accounts, useful for learning. To avoid surprises you can set a budget and billing alerts that email you when spending crosses a threshold. These are safety nets, not automatic spending caps.",
+          "tags": ["free-tier", "budget", "billing-alert", "cost-control"],
+          "source": "course-author"
+        },
+        {
+          "id": "aws-kb-4-3",
+          "unitId": "aws-unit-4-pricing-and-cost",
+          "title": "Turn things off",
+          "content": "The simplest cost habit is to stop or delete resources you no longer need: shut down idle EC2 instances, delete unused storage, and remove test environments. Because billing is usage-based, turning something off usually stops most of its charges.",
+          "tags": ["cost-control", "shutdown", "cleanup", "idle"],
+          "source": "course-author"
+        }
+      ],
+      "questions": [
+        {
+          "id": "aws-q-4-1",
+          "prompt": "You launched an EC2 instance for a test last week and forgot about it. Why might you still be charged, and what should you do?",
+          "type": "open",
+          "answer": "Compute is billed for the time the instance runs, so an idle-but-running instance keeps accruing cost; stop or terminate it to halt most charges.",
+          "hints": [
+            { "id": "aws-q-4-1-h-1", "order": 1, "text": "Billing is based on the resource running, not on you using it." },
+            { "id": "aws-q-4-1-h-2", "order": 2, "text": "What's the simplest cost habit from this unit?" }
+          ],
+          "difficulty": "beginner"
+        },
+        {
+          "id": "aws-q-4-2",
+          "prompt": "Which is the best way to get warned before spending gets too high?",
+          "type": "mcq",
+          "options": [
+            "Set a budget with billing alerts",
+            "Check the console once a year",
+            "Assume the free tier covers everything",
+            "Provision extra resources just in case"
+          ],
+          "answer": "Set a budget with billing alerts",
+          "hints": [
+            { "id": "aws-q-4-2-h-1", "order": 1, "text": "Which option actively notifies you when spending crosses a threshold?" }
+          ],
+          "difficulty": "beginner"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "aws-cm-4-1",
+          "mistake": "Assuming an idle resource is free.",
+          "correction": "A provisioned resource (like a running EC2 instance) accrues cost even when idle; stop or delete what you don't need.",
+          "relatedQuestionId": "aws-q-4-1"
+        },
+        {
+          "id": "aws-cm-4-2",
+          "mistake": "Treating the free tier as an unlimited safety net.",
+          "correction": "The free tier has limits; set budgets and billing alerts to catch overruns early."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "author": "Open Maestro (demo content)",
+    "createdAt": "2026-06-30T12:00:00.000Z",
+    "updatedAt": "2026-06-30T12:00:00.000Z",
+    "language": "en",
+    "level": "beginner",
+    "tags": ["aws", "cloud", "fundamentals", "infrastructure"],
+    "estimatedDurationMinutes": 60
+  },
+  "reusableMetadata": {
+    "reusable": true,
+    "domain": "cloud",
+    "topics": ["aws", "cloud", "compute", "storage", "networking", "pricing"],
+    "prerequisites": [],
+    "embeddingModel": "none",
+    "ragIndexed": false
+  }
+}

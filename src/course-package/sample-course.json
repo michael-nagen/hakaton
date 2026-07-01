@@ -1,0 +1,199 @@
+{
+  "id": "course-js-promises-101",
+  "title": "JavaScript Promises 101",
+  "description": "A short, hands-on course that takes you from callback confusion to confident async/await.",
+  "goal": "Be able to read, write, and debug asynchronous JavaScript using Promises and async/await.",
+  "version": "1.0.0",
+  "units": [
+    {
+      "id": "unit-1-why-async",
+      "title": "Why Asynchronous JavaScript?",
+      "goal": "Explain why JavaScript needs asynchronous code and what the event loop does at a high level.",
+      "order": 1,
+      "teacherBrain": {
+        "persona": "A patient senior engineer who teaches with small concrete examples.",
+        "tone": "Encouraging, concise, never condescending.",
+        "objectives": [
+          "Make the learner comfortable with the idea of non-blocking code.",
+          "Connect blocking vs non-blocking to real user-facing latency."
+        ],
+        "guidelines": [
+          "Use everyday analogies before code.",
+          "Ask a quick check-for-understanding question after each new idea.",
+          "Ground explanations in the provided knowledge chunks."
+        ],
+        "constraints": [
+          "Do not introduce async/await yet — that is a later unit.",
+          "Do not dump large code blocks; keep examples under 8 lines.",
+          "Never invent APIs that are not standard JavaScript."
+        ],
+        "systemPromptSeed": "You are teaching the very first unit. Assume the learner knows basic synchronous JS only."
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "kb-1-1",
+          "unitId": "unit-1-why-async",
+          "title": "Blocking vs non-blocking",
+          "content": "JavaScript runs on a single thread. A blocking operation (like a long synchronous loop) freezes everything else, including the UI. Non-blocking operations hand work off and let the engine keep responding to other events.",
+          "tags": ["blocking", "non-blocking", "single-thread", "event-loop"],
+          "source": "course-author"
+        },
+        {
+          "id": "kb-1-2",
+          "unitId": "unit-1-why-async",
+          "title": "The event loop in one paragraph",
+          "content": "The event loop continuously checks: is the call stack empty? If so, it takes the next queued callback (from timers, network, etc.) and runs it. This is how single-threaded JS can wait for many things at once without blocking.",
+          "tags": ["event-loop", "callback-queue", "call-stack"],
+          "source": "course-author"
+        },
+        {
+          "id": "kb-1-3",
+          "unitId": "unit-1-why-async",
+          "title": "Why callbacks were the first answer",
+          "content": "Before Promises, asynchronous results were delivered via callback functions passed into APIs like setTimeout or XMLHttpRequest. Nesting many callbacks led to deeply indented 'callback hell'.",
+          "tags": ["callbacks", "callback-hell", "history"],
+          "source": "course-author"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q-1-1",
+          "prompt": "In your own words, what happens to the UI when a long synchronous loop runs on the main thread?",
+          "type": "open",
+          "answer": "The UI freezes because the single thread is busy with the loop and cannot process other events until it finishes.",
+          "hints": [
+            { "id": "h-1-1-1", "order": 1, "text": "Think about how many threads run your JS by default." },
+            { "id": "h-1-1-2", "order": 2, "text": "If the one thread is busy, what can't it do?" }
+          ],
+          "difficulty": "beginner"
+        },
+        {
+          "id": "q-1-2",
+          "prompt": "Which best describes the event loop's job?",
+          "type": "mcq",
+          "options": [
+            "It adds more threads when JS is busy.",
+            "It runs queued callbacks when the call stack is empty.",
+            "It compiles JavaScript to machine code.",
+            "It blocks the page until network requests finish."
+          ],
+          "answer": "It runs queued callbacks when the call stack is empty.",
+          "hints": [
+            { "id": "h-1-2-1", "order": 1, "text": "It is about scheduling, not threads or compilation." }
+          ],
+          "difficulty": "beginner"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "cm-1-1",
+          "mistake": "Believing JavaScript is multi-threaded because async code 'runs in parallel'.",
+          "correction": "JS executes on one main thread; concurrency comes from the event loop scheduling callbacks, not from parallel threads.",
+          "relatedQuestionId": "q-1-2"
+        }
+      ]
+    },
+    {
+      "id": "unit-2-promises",
+      "title": "Promises, Step by Step",
+      "goal": "Create and consume a Promise, and chain .then()/.catch() correctly.",
+      "order": 2,
+      "teacherBrain": {
+        "persona": "A patient senior engineer who teaches with small concrete examples.",
+        "tone": "Encouraging, concise, practical.",
+        "objectives": [
+          "Teach the three Promise states and how they transition.",
+          "Get the learner chaining .then() and handling errors with .catch()."
+        ],
+        "guidelines": [
+          "Show a tiny runnable example for each concept.",
+          "Always pair a .then() example with its .catch() counterpart.",
+          "Reference the knowledge chunks rather than improvising semantics."
+        ],
+        "constraints": [
+          "Keep async/await out of this unit unless the learner explicitly asks.",
+          "Do not skip error handling — it is part of the goal."
+        ]
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "kb-2-1",
+          "unitId": "unit-2-promises",
+          "title": "The three states of a Promise",
+          "content": "A Promise is always in one of three states: pending (not settled yet), fulfilled (resolved with a value), or rejected (failed with a reason). Once settled it never changes state again.",
+          "tags": ["promise", "states", "pending", "fulfilled", "rejected"],
+          "source": "course-author"
+        },
+        {
+          "id": "kb-2-2",
+          "unitId": "unit-2-promises",
+          "title": "then, catch, finally",
+          "content": ".then(onFulfilled) runs when the promise resolves. .catch(onRejected) runs when it rejects. .finally() runs either way. Each .then() returns a new promise, which is what makes chaining possible.",
+          "tags": ["then", "catch", "finally", "chaining"],
+          "source": "course-author"
+        },
+        {
+          "id": "kb-2-3",
+          "unitId": "unit-2-promises",
+          "title": "Creating a promise",
+          "content": "new Promise((resolve, reject) => { ... }) gives you a settle function pair. Call resolve(value) on success or reject(error) on failure. Most of the time you consume promises returned by APIs rather than constructing your own.",
+          "tags": ["new-promise", "resolve", "reject", "constructor"],
+          "source": "course-author"
+        }
+      ],
+      "questions": [
+        {
+          "id": "q-2-1",
+          "prompt": "What are the three states a Promise can be in?",
+          "type": "short",
+          "answer": "pending, fulfilled, rejected",
+          "hints": [
+            { "id": "h-2-1-1", "order": 1, "text": "One before it settles, two after." }
+          ],
+          "difficulty": "beginner"
+        },
+        {
+          "id": "q-2-2",
+          "prompt": "Why does .then() let you chain another .then() after it?",
+          "type": "open",
+          "answer": "Because .then() itself returns a new promise, so you can attach another handler to that returned promise.",
+          "hints": [
+            { "id": "h-2-2-1", "order": 1, "text": "Look at what .then() returns." },
+            { "id": "h-2-2-2", "order": 2, "text": "Chaining works because each link is itself a promise." }
+          ],
+          "difficulty": "intermediate"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "cm-2-1",
+          "mistake": "Forgetting to return a value or promise inside a .then(), which breaks the chain.",
+          "correction": "Always return from a .then() callback if the next .then() depends on its result.",
+          "relatedQuestionId": "q-2-2"
+        },
+        {
+          "id": "cm-2-2",
+          "mistake": "Omitting .catch(), so rejected promises fail silently.",
+          "correction": "Attach a .catch() (or a trailing error handler) to every chain so rejections are handled."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "author": "Maestro Course Factory (seed)",
+    "createdAt": "2026-06-30T00:00:00.000Z",
+    "updatedAt": "2026-06-30T00:00:00.000Z",
+    "language": "en",
+    "level": "beginner",
+    "tags": ["javascript", "async", "promises"],
+    "estimatedDurationMinutes": 45
+  },
+  "reusableMetadata": {
+    "reusable": true,
+    "domain": "frontend",
+    "topics": ["javascript", "asynchronous-programming", "promises", "event-loop"],
+    "prerequisites": ["basic-javascript-syntax"],
+    "embeddingModel": "none",
+    "ragIndexed": false
+  }
+}

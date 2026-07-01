@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AppCard } from '../components/AppCard';
 import { AppIcon } from '../components/AppIcon';
 import { useAppShell } from '../contexts/AppShellContext';
@@ -17,6 +17,11 @@ export function DashboardPage() {
 
   const handleOpenApp = (appId: string, title: string, disabled?: boolean) => {
     if (disabled) return;
+    // The Courses tile opens the real prebuilt-course tutor flow; other tiles are still stubs.
+    if (appId === 'course-factory') {
+      navigate('/course-demo');
+      return;
+    }
     navigate(`/app/${appId}`);
     console.log('[TODO] open app:', appId, title);
   };
@@ -60,6 +65,22 @@ export function DashboardPage() {
           <p style={{ fontFamily: 'var(--font-text)', fontSize: 14, lineHeight: 1.55, color: 'var(--fg-3)', margin: '14px 0 0', maxWidth: 520 }}>
             Everything you need to learn and build, in one place. Pick a tool to jump in.
           </p>
+          <Link
+            to="/ai-setup"
+            style={{
+              display: 'inline-block',
+              marginTop: 14,
+              fontFamily: 'var(--font-ui)',
+              fontSize: 13,
+              padding: '8px 16px',
+              borderRadius: 'var(--radius-pill)',
+              border: '1px solid var(--maestro-ink-3)',
+              color: 'var(--fg-2)',
+              textDecoration: 'none',
+            }}
+          >
+            ⚙ Set up your AI tutor
+          </Link>
         </div>
 
         {/* Layout switcher */}
