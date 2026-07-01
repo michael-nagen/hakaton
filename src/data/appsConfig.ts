@@ -77,6 +77,7 @@ export const SECTIONS: AppSection[] = [
       { id: 'studio',   code: 'STD', title: 'Studio',   icon: 'palette',  accent: 'evergreen', description: 'Your project workspace for built work.' },
       { id: 'sandbox',  code: 'LAB', title: 'Sandbox',  icon: 'flask',    accent: 'lavender',  description: 'Experiment freely — nothing here is graded.', status: 'beta' },
       { id: 'ai-tutor', code: 'AI',  title: 'AI tutor', icon: 'sparkles', accent: 'sunset',    description: 'Ask anything, get unstuck, go deeper.', status: 'new' },
+      { id: 'course-factory', code: 'CRS', title: 'Courses', icon: 'graduation', accent: 'evergreen', description: 'Learn from prebuilt courses with an AI tutor.', status: 'new' },
     ],
   },
   {

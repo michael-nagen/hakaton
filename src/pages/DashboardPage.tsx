@@ -17,9 +17,9 @@ export function DashboardPage() {
 
   const handleOpenApp = (appId: string, title: string, disabled?: boolean) => {
     if (disabled) return;
-    // The Courses tile opens the real prebuilt-course tutor flow; other tiles are still stubs.
+    // The Courses tile opens the real learning surface (catalog → lessons → player).
     if (appId === 'course-factory') {
-      navigate('/course-demo');
+      navigate('/courses');
       return;
     }
     navigate(`/app/${appId}`);

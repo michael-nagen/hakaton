@@ -3,6 +3,8 @@ import { AppShell } from './layouts/AppShell';
 import { DashboardPage } from './pages/DashboardPage';
 import { AppDetailPage } from './pages/AppDetailPage';
 import { CourseDemoPage } from './pages/CourseDemoPage';
+import { CourseCatalogPage } from './pages/lesson/CourseCatalogPage';
+import { CoursePlayerPage } from './pages/lesson/CoursePlayerPage';
 import { TutorDemoPage } from './pages/TutorDemoPage';
 import { SimpleLessonDemoPage } from './pages/SimpleLessonDemoPage';
 import { AiSetupPage } from './pages/AiSetupPage';
@@ -14,6 +16,9 @@ const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { index: true, element: <DashboardPage /> },
+      // Real learning surface: catalog → course player (lesson list + player).
+      { path: 'courses', element: <CourseCatalogPage /> },
+      { path: 'courses/:courseId', element: <CoursePlayerPage /> },
       { path: 'course-demo', element: <CourseDemoPage /> },
       { path: 'app/:appId', element: <AppDetailPage /> },
     ],
