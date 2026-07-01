@@ -9,6 +9,8 @@ import {
   validateOpenRouterKey,
   validateCustomKey,
   LOCAL_MODEL_CATALOG,
+  localInstallStatusLabel,
+  getLocalModelById,
   buildOpenRouterAuthUrl,
   readOAuthCodeFromUrl,
   clearOAuthCodeFromUrl,
@@ -187,7 +189,7 @@ function providerStatus(params: { type: AiProviderType; hasKey: boolean; error: 
     case 'built_in':
       return { label: 'Ready', tone: 'var(--evergreen-500)' };
     case 'local_model':
-      return { label: 'Coming soon', tone: 'var(--fg-3)' };
+      return { label: 'Runtime not installed yet', tone: 'var(--sunset-500, #FF8B62)' };
     case 'gemini_byok':
     case 'openrouter_byok':
       return params.hasKey
@@ -355,6 +357,13 @@ export function AiSetupPage() {
 
   const status = providerStatus({ type: activeType, hasKey: Boolean(config.apiKey), error: providerError });
 
+  // Status-bar labels: show the provider category and a human model name.
+  const providerLabel = activeType === 'local_model' ? 'Local model' : config.displayName;
+  const modelLabel =
+    activeType === 'local_model'
+      ? getLocalModelById({ id: config.model ?? '' })?.displayName ?? config.model ?? '—'
+      : config.model ?? '—';
+
   return (
     <div
       data-theme="dark"
@@ -387,11 +396,11 @@ export function AiSetupPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px 20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <span style={labelStyle}>Current provider</span>
-              <span style={{ fontSize: 14, color: 'var(--fg-1)' }}>{config.displayName}</span>
+              <span style={{ fontSize: 14, color: 'var(--fg-1)' }}>{providerLabel}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <span style={labelStyle}>Model</span>
-              <span style={{ fontSize: 14, color: 'var(--fg-2)' }}>{config.model ?? '—'}</span>
+              <span style={{ fontSize: 14, color: 'var(--fg-2)' }}>{modelLabel}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <span style={labelStyle}>Status</span>
@@ -547,33 +556,52 @@ export function AiSetupPage() {
         {/* ── Local model (real setup path; runtime pending) ── */}
         <Card title="Offline model" badge={{ text: 'Offline', tone: 'var(--sunset-500, #FF8B62)' }} active={activeType === 'local_model'}>
           <p style={disclosure}>
-            Download a free local model and run the tutor on your device without internet. On-device inference is not
-            wired up yet, so downloads are marked coming soon.
+            Run the tutor on your device without internet. You can select a model now; on-device inference isn't
+            installed yet, so downloads are marked coming soon and the tutor will ask you to switch providers until a
+            runtime ships.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
-            {LOCAL_MODEL_CATALOG.map((m, i) => (
-              <div
-                key={m.id}
-                style={{ border: '1px solid var(--maestro-ink-3)', borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <span style={{ fontSize: 14, color: 'var(--fg-1)' }}>{i === 0 ? 'Small model' : 'Better model'}</span>
-                  <Badge text="Coming soon" tone="var(--fg-3)" />
+            {LOCAL_MODEL_CATALOG.map((m) => {
+              const selected = activeType === 'local_model' && config.model === m.id;
+              return (
+                <div
+                  key={m.id}
+                  style={{
+                    border: `1px solid ${selected ? 'var(--evergreen-500)' : 'var(--maestro-ink-3)'}`,
+                    borderRadius: 10,
+                    padding: 14,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <span style={{ fontSize: 14, color: 'var(--fg-1)' }}>{m.shortLabel}</span>
+                    <Badge text={localInstallStatusLabel(m.installStatus)} tone="var(--fg-3)" />
+                  </div>
+                  <span style={{ fontSize: 13, color: 'var(--fg-2)' }}>{m.displayName}</span>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 3, fontSize: 12, color: 'var(--fg-3)' }}>
+                    <li>~{(m.estimatedSizeMb / 1000).toFixed(1)} GB download</li>
+                    <li>Recommended RAM: {m.minRamGb ?? '?'}–{m.recommendedRamGb ?? '?'} GB</li>
+                    <li>Works offline: yes</li>
+                    <li>{m.qualityLabel} · {m.description}</li>
+                  </ul>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      style={primaryBtn(selected)}
+                      disabled={selected}
+                      onClick={() => setAiProvider({ type: 'local_model', model: m.id, displayName: m.displayName })}
+                    >
+                      {selected ? 'Selected' : 'Select / Prepare'}
+                    </button>
+                    <button type="button" style={ghostBtn(true)} disabled title="On-device inference is not installed yet">
+                      Runtime not installed yet
+                    </button>
+                  </div>
                 </div>
-                <span style={{ fontSize: 13, color: 'var(--fg-2)' }}>{m.displayName}</span>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 3, fontSize: 12, color: 'var(--fg-3)' }}>
-                  <li>Download: ~{(m.sizeMb / 1000).toFixed(1)} GB</li>
-                  <li>Recommended RAM: {m.recommendedRamGb ?? '?'} GB{m.minRamGb ? ` (min ${m.minRamGb} GB)` : ''}</li>
-                  <li>Works offline: yes</li>
-                  <li>Quality: {i === 0 ? 'basic tutor quality' : 'better quality, stronger device'}</li>
-                </ul>
-                <div>
-                  <button type="button" style={ghostBtn(true)} disabled title="On-device inference is not implemented yet">
-                    Download (coming soon)
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Card>
 

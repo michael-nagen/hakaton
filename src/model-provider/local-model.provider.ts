@@ -1,19 +1,31 @@
-// ── Model Provider — local model (placeholder) ───────────────────────
+// ── Model Provider — local model (runtime pending) ───────────────────
 //
 // Satisfies the ModelProvider seam so the offline path is a first-class citizen
-// in config, the registry, and the tutor layer — but on-device inference isn't
-// wired up yet. generateText throws a clear, catchable error so the UI can show
-// an honest "coming soon" state instead of pretending to answer. When a real
-// runtime (WebLLM/MLC/wasm) lands, only this file changes.
+// in config, the registry, and the tutor layer. On-device inference isn't wired
+// up yet, so generateText throws a clear, typed, catchable error — it does NOT
+// silently fall back to the mock. The UI/tutor flow catches it and shows a
+// friendly message. When a real runtime (WebLLM/MLC/llama.cpp-wasm) lands, only
+// this file changes; callers stay the same.
 
 import type { ModelProvider } from './model-provider.types';
 import { DEFAULT_LOCAL_MODEL_ID, getLocalModelById } from './local-model-catalog';
 
-/** Thrown by the placeholder local provider. Recognizable + safe to display. */
-export class LocalModelNotReadyError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'LocalModelNotReadyError';
+/**
+ * Thrown when a local model is selected but no on-device inference runtime is
+ * installed/implemented. Typed so the UI can recognize it and show guidance
+ * rather than a generic failure. Safe to display — carries no secrets.
+ */
+export class LocalModelRuntimeNotImplementedError extends Error {
+  /** The selected local model id, for messaging/telemetry. */
+  readonly modelId: string;
+  constructor(params: { modelId: string; message?: string }) {
+    super(
+      params.message ??
+        'This offline model is selected, but local inference is not installed yet. ' +
+          'Use Gemini/OpenRouter for now or switch back to Built-in AI.',
+    );
+    this.name = 'LocalModelRuntimeNotImplementedError';
+    this.modelId = params.modelId;
   }
 }
 
@@ -24,9 +36,7 @@ export function createLocalModelProvider(params: { modelId?: string }): ModelPro
     name: 'local',
     modelName: model?.displayName ?? modelId,
     async generateText() {
-      throw new LocalModelNotReadyError(
-        'Local on-device inference is not available yet. Choose Built-in AI, Gemini, or OpenRouter for now.',
-      );
+      throw new LocalModelRuntimeNotImplementedError({ modelId });
     },
   };
 }
