@@ -1,0 +1,133 @@
+{
+  "id": "course-js-promises-101",
+  "title": "JavaScript Promises: The Three States",
+  "description": "A beginner course introducing what a JavaScript Promise is, focusing first on its three states before any consumption syntax.",
+  "goal": "Understand that a Promise represents an eventual result that moves through pending, fulfilled, and rejected states.",
+  "version": "1.0.0",
+  "units": [
+    {
+      "id": "js-promises-unit-1-three-states",
+      "title": "The Three States of a Promise",
+      "goal": "Explain that a Promise is always in exactly one of three states — pending, fulfilled, or rejected — and that its value is not available until it settles.",
+      "order": 1,
+      "teacherBrain": {
+        "persona": "a patient JavaScript mentor who builds intuition before syntax",
+        "tone": "encouraging, concrete, never condescending",
+        "objectives": [
+          "Name the three states of a Promise.",
+          "Explain that a pending Promise has not settled and holds no result yet.",
+          "Distinguish a rejected Promise from a pending one."
+        ],
+        "guidelines": [
+          "Use plain language and everyday analogies before any code.",
+          "Correct the common state confusions gently.",
+          "Give a hint before revealing an explanation."
+        ],
+        "constraints": [
+          "Do not teach how to consume a Promise with .then() or .catch() — that is the next unit.",
+          "Do not teach async/await here.",
+          "Keep to the three states and settling; do not go into chaining."
+        ]
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "js-promises-unit-1-kb-1",
+          "unitId": "js-promises-unit-1-three-states",
+          "title": "A Promise has three states",
+          "content": "A Promise is an object that represents a result that is not ready yet. At any moment it is in exactly one of three states: pending (still working), fulfilled (finished successfully with a value), or rejected (finished with an error). It starts pending and settles once, into either fulfilled or rejected.",
+          "tags": ["promise", "states", "pending", "fulfilled", "rejected"]
+        },
+        {
+          "id": "js-promises-unit-1-kb-2",
+          "unitId": "js-promises-unit-1-three-states",
+          "title": "Pending is not the same as rejected",
+          "content": "A pending Promise is still running and has not settled, so it has no result yet. A rejected Promise has already settled unsuccessfully with an error reason. Pending means unfinished; rejected means finished but failed. They are different states, so a pending Promise is not a failed one.",
+          "tags": ["pending", "rejected", "difference", "settled"]
+        }
+      ],
+      "questions": [
+        {
+          "id": "js-promises-unit-1-q-1",
+          "prompt": "Name the three states a Promise can be in.",
+          "type": "short",
+          "answer": "pending, fulfilled, rejected",
+          "hints": [
+            { "id": "js-promises-unit-1-q-1-h-1", "order": 1, "text": "One state is before it finishes, and two are after." },
+            { "id": "js-promises-unit-1-q-1-h-2", "order": 2, "text": "The two finished states are one success and one failure." }
+          ],
+          "difficulty": "beginner"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "js-promises-unit-1-cm-1",
+          "mistake": "Thinking a pending Promise is the same as a rejected one.",
+          "correction": "A pending Promise is still working and has not settled, while a rejected Promise has already settled with an error. Pending is not the same as rejected — one is unfinished and the other finished unsuccessfully.",
+          "relatedQuestionId": "js-promises-unit-1-q-1"
+        },
+        {
+          "id": "js-promises-unit-1-cm-2",
+          "mistake": "Assuming a pending Promise already holds its result value.",
+          "correction": "While a Promise is pending its value is not ready yet, so there is no result to read. The value only becomes available once the Promise settles as fulfilled.",
+          "relatedQuestionId": "js-promises-unit-1-q-1"
+        }
+      ]
+    },
+    {
+      "id": "js-promises-unit-2-then-catch",
+      "title": "Consuming a Promise with .then() and .catch()",
+      "goal": "Read a settled Promise's outcome using .then() for success and .catch() for errors.",
+      "order": 2,
+      "teacherBrain": {
+        "persona": "a patient JavaScript mentor",
+        "tone": "encouraging, concrete",
+        "objectives": ["Attach a success handler with .then().", "Handle errors with .catch()."],
+        "guidelines": ["Assume the three states are understood.", "Show small, focused examples."],
+        "constraints": ["Do not teach async/await here.", "Assume unit 1 (the three states) is done."]
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "js-promises-unit-2-kb-1",
+          "unitId": "js-promises-unit-2-then-catch",
+          "title": "Reading the outcome",
+          "content": "Once a Promise settles you read its outcome with handler callbacks: a success handler runs with the fulfilled value, and an error handler runs with the rejection reason.",
+          "tags": ["then", "catch", "handlers"]
+        }
+      ],
+      "questions": [
+        {
+          "id": "js-promises-unit-2-q-1",
+          "prompt": "Which handler runs when a Promise is fulfilled?",
+          "type": "short",
+          "answer": "the success handler",
+          "hints": [{ "id": "js-promises-unit-2-q-1-h-1", "order": 1, "text": "It pairs with the fulfilled state." }],
+          "difficulty": "beginner"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "js-promises-unit-2-cm-1",
+          "mistake": "Expecting the success handler to run when the Promise is rejected.",
+          "correction": "The success handler only runs on fulfillment; a rejection is handled by the error handler instead.",
+          "relatedQuestionId": "js-promises-unit-2-q-1"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "author": "teacher-harness fixtures",
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z",
+    "language": "en",
+    "level": "beginner",
+    "tags": ["javascript", "promises", "async"],
+    "estimatedDurationMinutes": 20
+  },
+  "reusableMetadata": {
+    "reusable": true,
+    "domain": "frontend",
+    "topics": ["javascript", "promises", "asynchronous"],
+    "prerequisites": ["javascript-basics"],
+    "ragIndexed": false
+  }
+}

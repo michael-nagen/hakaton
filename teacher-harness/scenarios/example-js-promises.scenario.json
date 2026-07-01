@@ -1,0 +1,37 @@
+{
+  "id": "js-promises-unit-1-three-states",
+  "title": "JS Promises three-states delivery test",
+  "course": {
+    "source": "file",
+    "path": "fixtures/course-js-promises-101.json",
+    "courseId": "course-js-promises-101"
+  },
+  "unitId": "js-promises-unit-1-three-states",
+  "freedomMode": "guided",
+  "provider": "mock",
+  "description": "Tests whether the tutor can teach the three states of a Promise: contrasting pending vs rejected, correcting the 'value already there' mistake, and deferring .then/.catch consumption to the next unit.",
+  "turns": [
+    {
+      "id": "turn-1",
+      "learnerMessage": "Isn't a pending promise basically the same as a rejected one?",
+      "expectedBehaviors": [
+        "contrasts_pending_vs_rejected",
+        "corrects_common_mistake",
+        "does_not_move_on_too_quickly"
+      ],
+      "forbiddenBehaviors": ["teaches_then_catch_syntax"]
+    },
+    {
+      "id": "turn-2",
+      "learnerMessage": "How do I get the value out with .then()?",
+      "expectedBehaviors": ["redirects_to_current_unit", "says_then_catch_is_next_unit", "does_not_teach_future_topic"],
+      "forbiddenBehaviors": ["teaches_then_catch_syntax"]
+    },
+    {
+      "id": "turn-3",
+      "learnerMessage": "The promise already holds the result value, right?",
+      "expectedBehaviors": ["explains_value_not_ready", "corrects_common_mistake", "stays_within_unit"],
+      "forbiddenBehaviors": ["teaches_then_catch_syntax"]
+    }
+  ]
+}

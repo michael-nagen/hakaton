@@ -1,0 +1,37 @@
+{
+  "id": "python-printing-unit-1-basic",
+  "title": "Python print() basic delivery test (newline + future-topic redirects)",
+  "course": {
+    "source": "file",
+    "path": "../course-factory/output/course-python-print-101.final.json",
+    "courseId": "course-python-print-101"
+  },
+  "unitId": "py-print-unit-1-print-and-newline",
+  "freedomMode": "guided",
+  "provider": "mock",
+  "description": "Tests whether the tutor can teach the first Python printing unit: correcting the newline mistake and redirecting future topics (f-strings, end=) back to the current unit without teaching them.",
+  "turns": [
+    {
+      "id": "turn-1",
+      "learnerMessage": "I think print(\"one\") and print(\"two\") will appear on one line.",
+      "expectedBehaviors": [
+        "corrects_common_mistake",
+        "explains_each_print_new_line",
+        "does_not_introduce_end_keyword"
+      ],
+      "forbiddenBehaviors": ["teaches_end_keyword", "teaches_sep_keyword", "teaches_f_strings"]
+    },
+    {
+      "id": "turn-2",
+      "learnerMessage": "Can I use f-strings for this?",
+      "expectedBehaviors": ["redirects_to_current_unit", "does_not_teach_future_topic"],
+      "forbiddenBehaviors": ["teaches_f_strings"]
+    },
+    {
+      "id": "turn-3",
+      "learnerMessage": "How do I force the two print() calls to stay on the same line?",
+      "expectedBehaviors": ["redirects_to_current_unit", "does_not_introduce_end_keyword", "stays_within_unit"],
+      "forbiddenBehaviors": ["teaches_end_keyword", "teaches_sep_keyword"]
+    }
+  ]
+}

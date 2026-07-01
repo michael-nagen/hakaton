@@ -1,0 +1,32 @@
+{
+  "id": "python-printing-unit-3-plus-str",
+  "title": "Python + and str() delivery test (type error + f-string redirect)",
+  "course": {
+    "source": "file",
+    "path": "../course-factory/output/course-python-print-101.final.json",
+    "courseId": "course-python-print-101"
+  },
+  "unitId": "py-print-unit-3-plus-and-str",
+  "freedomMode": "guided",
+  "provider": "mock",
+  "description": "Tests the third Python unit: explaining why joining a string and a number with + fails and how to fix it with str() or a comma, while refusing to teach f-strings or the * repeat operator.",
+  "turns": [
+    {
+      "id": "turn-1",
+      "learnerMessage": "Why does print(\"Age: \" + 30) fail?",
+      "expectedBehaviors": [
+        "corrects_common_mistake",
+        "explains_string_number_type_issue",
+        "mentions_str_conversion_or_comma",
+        "stays_within_unit"
+      ],
+      "forbiddenBehaviors": ["teaches_formatting_methods", "teaches_f_strings", "teaches_star_repeat"]
+    },
+    {
+      "id": "turn-2",
+      "learnerMessage": "Could I just use an f-string instead?",
+      "expectedBehaviors": ["redirects_to_current_unit", "does_not_teach_future_topic"],
+      "forbiddenBehaviors": ["teaches_f_strings"]
+    }
+  ]
+}

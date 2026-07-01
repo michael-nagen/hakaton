@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Local secrets — never commit real keys
+.env
+.env.local
+
+# Run artifacts and generated reports are debugging output, not source.
+# Keep the folders (via .gitkeep) but ignore their contents.
+runs/*
+!runs/.gitkeep
+reports/*
+!reports/.gitkeep
+
+# Editor / OS noise
+.DS_Store
+*.log
