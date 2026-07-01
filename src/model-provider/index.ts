@@ -9,4 +9,7 @@ export * from './openrouter-oauth';
 export * from './custom-model.provider';
 export * from './local-model.provider';
 export * from './local-model-catalog';
+export * from './local-model-state';
+export * from './local-model-storage';
+export * from './local-model-download-manager';
 export * from './create-model-provider';

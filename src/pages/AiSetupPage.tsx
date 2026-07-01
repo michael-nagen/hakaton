@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAiProvider } from '../contexts/AiProviderContext';
 import {
@@ -9,14 +9,19 @@ import {
   validateOpenRouterKey,
   validateCustomKey,
   LOCAL_MODEL_CATALOG,
-  localInstallStatusLabel,
   getLocalModelById,
   buildOpenRouterAuthUrl,
   readOAuthCodeFromUrl,
   clearOAuthCodeFromUrl,
   exchangeOpenRouterCode,
+  downloadLocalModel,
+  localModelStorage,
+  readLocalModelState,
+  writeLocalModelState,
+  clearLocalModelState,
+  effectiveInstallStatus,
 } from '../model-provider';
-import type { AiProviderType } from '../model-provider';
+import type { AiProviderType, LocalModelConfig, LocalModelInstallStatus, LocalModelState } from '../model-provider';
 
 // Standalone AI setup screen. Goal: a near "one-click" connect flow per provider
 // so users never need to understand API infrastructure — click connect, land on
@@ -180,21 +185,38 @@ function Card({
 }
 
 /** Human-readable status for the current provider config. */
-function providerStatus(params: { type: AiProviderType; hasKey: boolean; error: string | null }): {
+function providerStatus(params: {
+  type: AiProviderType;
+  hasKey: boolean;
+  error: string | null;
+  localStatus?: LocalModelInstallStatus;
+}): {
   label: string;
   tone: string;
 } {
   if (params.error) return { label: 'Needs setup', tone: 'var(--sunset-500, #FF8B62)' };
+  const warn = 'var(--sunset-500, #FF8B62)';
   switch (params.type) {
     case 'built_in':
       return { label: 'Ready', tone: 'var(--evergreen-500)' };
     case 'local_model':
-      return { label: 'Runtime not installed yet', tone: 'var(--sunset-500, #FF8B62)' };
+      switch (params.localStatus) {
+        case 'installed':
+          return { label: 'Installed · runtime missing', tone: warn };
+        case 'downloading':
+          return { label: 'Downloading…', tone: 'var(--fg-3)' };
+        case 'error':
+          return { label: 'Download failed', tone: warn };
+        case 'download_url_missing':
+          return { label: 'Download URL not configured yet', tone: warn };
+        default:
+          return { label: 'Not downloaded yet', tone: warn };
+      }
     case 'gemini_byok':
     case 'openrouter_byok':
       return params.hasKey
         ? { label: 'Connected', tone: 'var(--evergreen-500)' }
-        : { label: 'Needs key', tone: 'var(--sunset-500, #FF8B62)' };
+        : { label: 'Needs key', tone: warn };
     case 'custom':
       return { label: 'Connected', tone: 'var(--evergreen-500)' };
   }
@@ -227,6 +249,98 @@ export function AiSetupPage() {
 
   // ── Test current provider ──────────────────────────────────────────
   const [testResult, setTestResult] = useState<Validation>(IDLE);
+
+  // ── Local model download state (per model) ─────────────────────────
+  const [localStates, setLocalStates] = useState<Record<string, LocalModelState>>({});
+  const aborters = useRef<Record<string, AbortController>>({});
+
+  // Reconcile persisted state with what's actually in storage, on mount.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const entries: Record<string, LocalModelState> = {};
+      for (const m of LOCAL_MODEL_CATALOG) {
+        const persisted = readLocalModelState({ modelId: m.id });
+        const hasFile = await localModelStorage.hasModelFile({ modelId: m.id });
+        let statusValue: LocalModelInstallStatus = effectiveInstallStatus({ model: m, state: persisted });
+        if (hasFile) statusValue = 'installed';
+        else if (statusValue === 'installed') statusValue = m.downloadUrl ? 'not_installed' : 'download_url_missing';
+        entries[m.id] = {
+          modelId: m.id,
+          status: statusValue,
+          downloadedBytes: persisted?.downloadedBytes,
+          totalBytes: persisted?.totalBytes,
+          localPath: persisted?.localPath,
+          errorMessage: persisted?.errorMessage,
+          updatedAt: persisted?.updatedAt ?? '',
+        };
+      }
+      if (!cancelled) setLocalStates(entries);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const patchLocal = (modelId: string, patch: Partial<LocalModelState>) => {
+    setLocalStates((prev) => {
+      const base = prev[modelId] ?? { modelId, status: 'not_installed' as LocalModelInstallStatus, updatedAt: '' };
+      return { ...prev, [modelId]: { ...base, ...patch } };
+    });
+  };
+
+  const startDownload = async (model: LocalModelConfig) => {
+    if (!model.downloadUrl) return;
+    const controller = new AbortController();
+    aborters.current[model.id] = controller;
+    patchLocal(model.id, { status: 'downloading', downloadedBytes: 0, totalBytes: undefined, errorMessage: undefined });
+    writeLocalModelState({ state: { modelId: model.id, status: 'downloading', downloadedBytes: 0 } });
+    try {
+      const result = await downloadLocalModel({
+        model,
+        signal: controller.signal,
+        onProgress: (p) => patchLocal(model.id, { status: 'downloading', downloadedBytes: p.downloadedBytes, totalBytes: p.totalBytes }),
+      });
+      patchLocal(model.id, { status: 'installed', downloadedBytes: result.downloadedBytes, localPath: result.localPath });
+      writeLocalModelState({
+        state: { modelId: model.id, status: 'installed', downloadedBytes: result.downloadedBytes, localPath: result.localPath },
+      });
+    } catch (err) {
+      if (controller.signal.aborted) {
+        patchLocal(model.id, { status: 'not_installed', downloadedBytes: 0 });
+        clearLocalModelState({ modelId: model.id });
+      } else {
+        const message = err instanceof Error ? err.message : 'Download failed.';
+        patchLocal(model.id, { status: 'error', errorMessage: message });
+        writeLocalModelState({ state: { modelId: model.id, status: 'error', errorMessage: message } });
+      }
+    } finally {
+      delete aborters.current[model.id];
+    }
+  };
+
+  const cancelDownload = (model: LocalModelConfig) => {
+    aborters.current[model.id]?.abort();
+  };
+
+  const deleteDownload = async (model: LocalModelConfig) => {
+    try {
+      await localModelStorage.deleteModelFile({ modelId: model.id });
+    } catch {
+      // ignore — nothing to delete / storage unavailable
+    }
+    clearLocalModelState({ modelId: model.id });
+    patchLocal(model.id, {
+      status: model.downloadUrl ? 'not_installed' : 'download_url_missing',
+      downloadedBytes: 0,
+      totalBytes: undefined,
+      localPath: undefined,
+      errorMessage: undefined,
+    });
+  };
+
+  const localStatusOf = (model: LocalModelConfig): LocalModelInstallStatus =>
+    localStates[model.id]?.status ?? effectiveInstallStatus({ model, state: null });
 
   // Complete an OpenRouter OAuth round-trip if we returned with ?code=...
   useEffect(() => {
@@ -355,7 +469,12 @@ export function AiSetupPage() {
     }
   };
 
-  const status = providerStatus({ type: activeType, hasKey: Boolean(config.apiKey), error: providerError });
+  const status = providerStatus({
+    type: activeType,
+    hasKey: Boolean(config.apiKey),
+    error: providerError,
+    localStatus: activeType === 'local_model' ? localStates[config.model ?? '']?.status : undefined,
+  });
 
   // Status-bar labels: show the provider category and a human model name.
   const providerLabel = activeType === 'local_model' ? 'Local model' : config.displayName;
@@ -553,16 +672,30 @@ export function AiSetupPage() {
           </details>
         </Card>
 
-        {/* ── Local model (real setup path; runtime pending) ── */}
+        {/* ── Local model (download + runtime pending) ── */}
         <Card title="Offline model" badge={{ text: 'Offline', tone: 'var(--sunset-500, #FF8B62)' }} active={activeType === 'local_model'}>
           <p style={disclosure}>
-            Run the tutor on your device without internet. You can select a model now; on-device inference isn't
-            installed yet, so downloads are marked coming soon and the tutor will ask you to switch providers until a
-            runtime ships.
+            Download a model to your device and run the tutor offline. Downloading is separate from inference: even after
+            a model is downloaded, tutor responses stay disabled until an on-device runtime ships — we won't fake it.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
             {LOCAL_MODEL_CATALOG.map((m) => {
               const selected = activeType === 'local_model' && config.model === m.id;
+              const st = localStates[m.id];
+              const status = localStatusOf(m);
+              const doneMb = Math.round((st?.downloadedBytes ?? 0) / 1_000_000);
+              const totalMb = st?.totalBytes ? Math.round(st.totalBytes / 1_000_000) : Math.round(m.estimatedSizeMb);
+              const percent = st?.totalBytes ? Math.min(100, Math.round(((st.downloadedBytes ?? 0) / st.totalBytes) * 100)) : undefined;
+              const badge =
+                status === 'installed'
+                  ? { text: 'Downloaded', tone: 'var(--evergreen-500)' }
+                  : status === 'downloading'
+                    ? { text: 'Downloading', tone: 'var(--fg-3)' }
+                    : status === 'error'
+                      ? { text: 'Download failed', tone: 'var(--sunset-500, #FF8B62)' }
+                      : status === 'download_url_missing'
+                        ? { text: 'URL not configured', tone: 'var(--fg-3)' }
+                        : { text: 'Not installed', tone: 'var(--fg-3)' };
               return (
                 <div
                   key={m.id}
@@ -577,28 +710,101 @@ export function AiSetupPage() {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     <span style={{ fontSize: 14, color: 'var(--fg-1)' }}>{m.shortLabel}</span>
-                    <Badge text={localInstallStatusLabel(m.installStatus)} tone="var(--fg-3)" />
+                    <Badge text={badge.text} tone={badge.tone} />
                   </div>
                   <span style={{ fontSize: 13, color: 'var(--fg-2)' }}>{m.displayName}</span>
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 3, fontSize: 12, color: 'var(--fg-3)' }}>
                     <li>~{(m.estimatedSizeMb / 1000).toFixed(1)} GB download</li>
-                    <li>Recommended RAM: {m.minRamGb ?? '?'}–{m.recommendedRamGb ?? '?'} GB</li>
+                    <li>Recommended RAM: {m.minRamGb}–{m.recommendedRamGb} GB</li>
                     <li>Works offline: yes</li>
                     <li>{m.qualityLabel} · {m.description}</li>
                   </ul>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <button
-                      type="button"
-                      style={primaryBtn(selected)}
-                      disabled={selected}
-                      onClick={() => setAiProvider({ type: 'local_model', model: m.id, displayName: m.displayName })}
-                    >
-                      {selected ? 'Selected' : 'Select / Prepare'}
-                    </button>
-                    <button type="button" style={ghostBtn(true)} disabled title="On-device inference is not installed yet">
-                      Runtime not installed yet
-                    </button>
-                  </div>
+
+                  {/* Download state area */}
+                  {status === 'download_url_missing' && (
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <button type="button" style={ghostBtn(true)} disabled title="No official model file URL is configured yet">
+                        Download URL not configured yet
+                      </button>
+                      <button
+                        type="button"
+                        style={ghostBtn(selected)}
+                        disabled={selected}
+                        onClick={() => setAiProvider({ type: 'local_model', model: m.id, displayName: m.displayName })}
+                      >
+                        {selected ? 'Selected' : 'Select'}
+                      </button>
+                    </div>
+                  )}
+
+                  {status === 'downloading' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--fg-2)' }}>
+                        Downloading… {percent !== undefined ? `${percent}%` : ''}
+                      </span>
+                      <div style={{ height: 6, borderRadius: 999, background: 'var(--maestro-ink-3)', overflow: 'hidden' }}>
+                        <div style={{ width: `${percent ?? 8}%`, height: '100%', background: 'var(--evergreen-500)', transition: 'width var(--anim-fast, 120ms)' }} />
+                      </div>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)' }}>
+                        {doneMb}MB / {totalMb}MB
+                      </span>
+                      <div>
+                        <button type="button" style={ghostBtn()} onClick={() => cancelDownload(m)}>
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {status === 'error' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--sunset-500, #FF8B62)' }}>
+                        {st?.errorMessage ?? 'Download failed.'}
+                      </span>
+                      <div>
+                        <button type="button" style={primaryBtn(false)} onClick={() => void startDownload(m)}>
+                          Retry
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {status === 'installed' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--fg-3)' }}>
+                        Downloaded · runtime not installed yet
+                      </span>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          style={primaryBtn(selected)}
+                          disabled={selected}
+                          onClick={() => setAiProvider({ type: 'local_model', model: m.id, displayName: m.displayName })}
+                        >
+                          {selected ? 'Selected' : 'Use this model'}
+                        </button>
+                        <button type="button" style={ghostBtn()} onClick={() => void deleteDownload(m)}>
+                          Delete download
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {status === 'not_installed' && (
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <button type="button" style={primaryBtn(false)} onClick={() => void startDownload(m)}>
+                        Download model (~{(m.estimatedSizeMb / 1000).toFixed(1)} GB)
+                      </button>
+                      <button
+                        type="button"
+                        style={ghostBtn(selected)}
+                        disabled={selected}
+                        onClick={() => setAiProvider({ type: 'local_model', model: m.id, displayName: m.displayName })}
+                      >
+                        {selected ? 'Selected' : 'Select'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}

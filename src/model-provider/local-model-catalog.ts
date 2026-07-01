@@ -1,23 +1,26 @@
 // ── Model Provider — local model catalog ─────────────────────────────
 //
 // Metadata for on-device models the offline path can offer. This is a catalog
-// only — it does NOT run inference (see local-model.provider.ts). Kept runtime-
-// agnostic (`format` stays open) so we're not locked into one local runtime.
-// `downloadUrl` is nullable and `installStatus` is modelled up-front so real
-// download/install state can be wired in later without reshaping callers.
+// only — it does NOT run inference (see local-model.provider.ts) and does not
+// itself hold download state (see local-model-state.ts). Kept runtime-agnostic
+// so we're not locked into one local runtime. `downloadUrl` is nullable: until
+// an official file URL is configured here, the UI shows "Download URL not
+// configured yet" and downloads stay disabled. Adding a real URL later is a
+// pure catalog change — no other code moves.
 
 export type LocalModelFormat = 'gguf' | 'mlc' | 'onnx' | 'litert' | 'gguf_or_runtime_specific' | 'other';
 
 export type LocalModelFamily = 'gemma' | 'llama' | 'qwen' | 'other';
 
 /**
- * Lifecycle of a local model on THIS device. Only `metadata_only` is reachable
- * today (no runtime); the rest exist so the UI and provider can grow into real
- * download/install handling without a type change.
+ * Lifecycle of a local model on THIS device. `download_url_missing` is the
+ * baseline while no URL is configured; the rest are reached via the download
+ * manager + persisted state. `runtime_missing` means the file is present but no
+ * inference runtime exists yet.
  */
 export type LocalModelInstallStatus =
   | 'not_installed'
-  | 'metadata_only'
+  | 'download_url_missing'
   | 'downloading'
   | 'installed'
   | 'runtime_missing'
@@ -31,22 +34,26 @@ export type LocalModelConfig = {
   description: string;
   /** Approximate download size in MB. */
   estimatedSizeMb: number;
-  minRamGb?: number;
-  recommendedRamGb?: number;
+  minRamGb: number;
+  recommendedRamGb: number;
   /** Human-readable quality note for the card. */
   qualityLabel: string;
   modelFamily: LocalModelFamily;
-  /** Current install lifecycle state (metadata_only until a runtime exists). */
+  /** Baseline status derived from config (download_url_missing until a URL is set). */
   installStatus: LocalModelInstallStatus;
-  format: LocalModelFormat;
-  /** Final download URL — intentionally null until a download strategy exists. */
+  format: 'gguf_or_runtime_specific';
+  /** Final download URL — null until an official model file URL is configured. */
   downloadUrl: string | null;
+  /** File name to store the download under. */
+  fileName?: string;
+  /** Optional integrity checksum for the downloaded file. */
+  checksumSha256?: string | null;
 };
 
 /**
  * Offered local models, lightest first. Sizes/RAM are representative Q4 figures
- * for UI copy. No download URLs yet — inference runtime is not implemented, so
- * every entry is `metadata_only`.
+ * for UI copy. `downloadUrl` is intentionally null — we do not ship unofficial
+ * model URLs. Set these to official URLs when chosen; nothing else changes.
  */
 export const LOCAL_MODEL_CATALOG: readonly LocalModelConfig[] = [
   {
@@ -59,9 +66,11 @@ export const LOCAL_MODEL_CATALOG: readonly LocalModelConfig[] = [
     recommendedRamGb: 6,
     qualityLabel: 'Fastest',
     modelFamily: 'gemma',
-    installStatus: 'metadata_only',
+    installStatus: 'download_url_missing',
     format: 'gguf_or_runtime_specific',
     downloadUrl: null,
+    fileName: 'gemma-fast-offline.gguf',
+    checksumSha256: null,
   },
   {
     id: 'llama-better-offline',
@@ -73,9 +82,11 @@ export const LOCAL_MODEL_CATALOG: readonly LocalModelConfig[] = [
     recommendedRamGb: 8,
     qualityLabel: 'Better tutor quality',
     modelFamily: 'llama',
-    installStatus: 'metadata_only',
+    installStatus: 'download_url_missing',
     format: 'gguf_or_runtime_specific',
     downloadUrl: null,
+    fileName: 'llama-3.2-3b-better-offline.gguf',
+    checksumSha256: null,
   },
 ];
 
@@ -90,15 +101,16 @@ export const DEFAULT_LOCAL_MODEL_ID = LOCAL_MODEL_CATALOG[0]?.id ?? '';
 export function localInstallStatusLabel(status: LocalModelInstallStatus): string {
   switch (status) {
     case 'installed':
-      return 'Installed';
+      return 'Downloaded';
     case 'downloading':
       return 'Downloading';
     case 'not_installed':
       return 'Not installed';
-    case 'error':
-      return 'Error';
+    case 'download_url_missing':
+      return 'Download URL not configured yet';
     case 'runtime_missing':
-    case 'metadata_only':
       return 'Runtime not installed yet';
+    case 'error':
+      return 'Download failed';
   }
 }
