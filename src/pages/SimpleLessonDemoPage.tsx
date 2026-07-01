@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { getPrebuiltCourses } from '../course-package';
 import type { CoursePackage, LearningUnit } from '../course-package/course-package.types';
-import { mockModelProvider } from '../model-provider';
 import { useAiProvider } from '../contexts/AiProviderContext';
 import { DEFAULT_FREEDOM_MODE, runTutorTurn } from '../tutor-runtime';
 import type { TutorTurnDebug } from '../tutor-runtime';
@@ -70,7 +69,7 @@ const input: React.CSSProperties = {
 
 export function SimpleLessonDemoPage() {
   const courses = useMemo(() => getPrebuiltCourses(), []);
-  const { activeModelProvider } = useAiProvider();
+  const { activeModelProvider, providerError } = useAiProvider();
 
   const [course, setCourse] = useState<CoursePackage | null>(null);
   const [unit, setUnit] = useState<LearningUnit | null>(null);
@@ -99,9 +98,14 @@ export function SimpleLessonDemoPage() {
     const text = message.trim();
     if (!course || !unit || !text || loading) return;
 
-    // Use whatever provider the AI setup screen selected; fall back to the
-    // offline mock when the active config can't be built (e.g. missing key).
-    const provider = activeModelProvider ?? mockModelProvider;
+    // Use the provider selected in AI setup. No silent mock fallback: if it
+    // can't be built (e.g. missing key), surface the reason. The mock is only
+    // ever used when Built-in is selected (AiProviderContext maps it there).
+    if (!activeModelProvider) {
+      setError(providerError ?? 'No AI provider is ready. Open AI setup to connect one.');
+      return;
+    }
+    const provider = activeModelProvider;
 
     setChat((prev) => [...prev, { role: 'user', text }]);
     setMessage('');

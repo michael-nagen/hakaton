@@ -9,7 +9,6 @@ import {
 import type { CoursePackage, KnowledgeBaseChunk, LearningUnit } from '../course-package';
 import { buildTutorContext } from '../tutor-runtime/build-tutor-context';
 import { buildTutorPrompt } from '../tutor-runtime/build-tutor-prompt';
-import { mockModelProvider } from '../model-provider/mock-model.provider';
 import { useAiProvider } from '../contexts/AiProviderContext';
 
 // Focused MVP flow (no arbitrary generation on this screen):
@@ -42,7 +41,7 @@ interface TutorTurn {
 
 export function CourseDemoPage() {
   const navigate = useNavigate();
-  const { activeModelProvider } = useAiProvider();
+  const { activeModelProvider, providerError } = useAiProvider();
 
   // Index both prebuilt courses into the reusable-RAG index once, on first
   // render. Idempotent — safe under StrictMode double-invoke.
@@ -91,6 +90,13 @@ export function CourseDemoPage() {
   // the (mock) model. Never sends the whole course — only this unit's slice.
   const askTutor = async () => {
     if (!selectedCourse || !selectedUnit || !message.trim()) return;
+    // Route through the provider selected in AI setup. No silent mock fallback:
+    // if it can't be built (e.g. missing key), surface the reason. The mock is
+    // only ever used when Built-in is selected (AiProviderContext maps it there).
+    if (!activeModelProvider) {
+      setError(providerError ?? 'No AI provider is ready. Open AI setup to connect one.');
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -101,8 +107,7 @@ export function CourseDemoPage() {
         // Freedom mode defaults to "guided" inside the runtime.
       });
       const prompt = buildTutorPrompt({ context });
-      // Route through the provider selected in AI setup; fall back to the mock.
-      const provider = activeModelProvider ?? mockModelProvider;
+      const provider = activeModelProvider;
       const answer = await provider.generateText({
         prompt: prompt.userPrompt,
         system: prompt.systemPrompt,

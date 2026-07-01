@@ -4,7 +4,6 @@ import {
   getPrebuiltCourses,
   getPrebuiltCourseById,
 } from '../course-package';
-import { mockModelProvider } from '../model-provider';
 import { useAiProvider } from '../contexts/AiProviderContext';
 import { FREEDOM_MODES, DEFAULT_FREEDOM_MODE, runTutorTurn } from '../tutor-runtime';
 import type { FreedomMode, TutorTurnDebug } from '../tutor-runtime';
@@ -71,9 +70,14 @@ export function TutorDemoPage() {
   const send = async () => {
     const message = input.trim();
     if (!course || !unitId || !message || loading) return;
-    // Route through whatever provider the AI setup screen selected. Fall back to
-    // the offline mock when the active config can't be built (e.g. missing key).
-    const provider = activeModelProvider ?? mockModelProvider;
+    // Route through the provider selected in AI setup. No silent mock fallback:
+    // if it can't be built (e.g. missing key), surface the reason. The mock is
+    // only ever used when Built-in is selected (AiProviderContext maps it there).
+    if (!activeModelProvider) {
+      setError(providerError ?? 'No AI provider is ready. Open AI setup to connect one.');
+      return;
+    }
+    const provider = activeModelProvider;
 
     setChat((prev) => [...prev, { role: 'user', text: message }]);
     setInput('');
