@@ -5,6 +5,7 @@ export * from './model-provider.registry';
 export * from './limits';
 export * from './gemini-model.provider';
 export * from './openrouter-model.provider';
+export * from './openrouter-oauth';
 export * from './custom-model.provider';
 export * from './local-model.provider';
 export * from './local-model-catalog';

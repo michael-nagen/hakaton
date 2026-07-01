@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAiProvider } from '../contexts/AiProviderContext';
 import {
@@ -9,12 +9,21 @@ import {
   validateOpenRouterKey,
   validateCustomKey,
   LOCAL_MODEL_CATALOG,
+  buildOpenRouterAuthUrl,
+  readOAuthCodeFromUrl,
+  clearOAuthCodeFromUrl,
+  exchangeOpenRouterCode,
 } from '../model-provider';
 import type { AiProviderType } from '../model-provider';
 
-// Standalone AI setup screen. Lets the user choose how the tutor runs and (for
-// BYOK/custom) paste + validate a key that is stored on-device only. Styled with
-// the same design tokens as the other standalone pages — no CSS library.
+// Standalone AI setup screen. Goal: a near "one-click" connect flow per provider
+// so users never need to understand API infrastructure — click connect, land on
+// the exact external page, approve/copy, come back, paste/validate, done.
+// BYOK keys are validated with a tiny probe and stored on-device only. Styled
+// with the same design tokens as the other standalone pages (no CSS library).
+
+const GEMINI_KEY_PAGE = 'https://aistudio.google.com/apikey';
+const OPENROUTER_KEY_PAGE = 'https://openrouter.ai/settings/keys';
 
 type ValStatus = 'idle' | 'validating' | 'valid' | 'invalid';
 interface Validation {
@@ -43,6 +52,8 @@ const labelStyle: React.CSSProperties = {
   color: 'var(--fg-3)',
 };
 
+const disclosure: React.CSSProperties = { fontSize: 13, color: 'var(--fg-3)', margin: 0, lineHeight: 1.55 };
+
 function Badge({ text, tone }: { text: string; tone: string }) {
   return (
     <span
@@ -55,6 +66,7 @@ function Badge({ text, tone }: { text: string; tone: string }) {
         border: `1px solid ${tone}`,
         borderRadius: 'var(--radius-pill)',
         padding: '2px 8px',
+        whiteSpace: 'nowrap',
       }}
     >
       {text}
@@ -76,16 +88,21 @@ function primaryBtn(disabled: boolean): React.CSSProperties {
   };
 }
 
-const ghostBtn: React.CSSProperties = {
-  fontFamily: 'var(--font-ui)',
-  fontSize: 13,
-  padding: '8px 14px',
-  borderRadius: 'var(--radius-pill)',
-  border: '1px solid var(--maestro-ink-3)',
-  background: 'transparent',
-  color: 'var(--fg-2)',
-  cursor: 'pointer',
-};
+function ghostBtn(disabled = false): React.CSSProperties {
+  return {
+    fontFamily: 'var(--font-ui)',
+    fontSize: 13,
+    padding: '8px 14px',
+    borderRadius: 'var(--radius-pill)',
+    border: '1px solid var(--maestro-ink-3)',
+    background: 'transparent',
+    color: 'var(--fg-2)',
+    cursor: disabled ? 'default' : 'pointer',
+    opacity: disabled ? 0.5 : 1,
+    textDecoration: 'none',
+    display: 'inline-block',
+  };
+}
 
 function ValidationLine({ v }: { v: Validation }) {
   if (v.status === 'idle') return null;
@@ -99,9 +116,30 @@ function ValidationLine({ v }: { v: Validation }) {
     v.status === 'validating'
       ? 'Validating…'
       : v.status === 'valid'
-        ? 'Key validated. Provider saved.'
+        ? '✓ Connected. Provider saved.'
         : v.message || 'Validation failed.';
   return <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color, margin: '6px 0 0' }}>{text}</p>;
+}
+
+function Step({ n, children }: { n: number; children: React.ReactNode }) {
+  return (
+    <li style={{ display: 'flex', gap: 8, alignItems: 'baseline', fontSize: 13, color: 'var(--fg-3)', lineHeight: 1.5 }}>
+      <span
+        style={{
+          flex: '0 0 auto',
+          fontFamily: 'var(--font-mono)',
+          fontSize: 11,
+          color: 'var(--evergreen-500)',
+          border: '1px solid var(--maestro-ink-3)',
+          borderRadius: 'var(--radius-pill)',
+          padding: '0 7px',
+        }}
+      >
+        {n}
+      </span>
+      <span>{children}</span>
+    </li>
+  );
 }
 
 function Card({
@@ -124,7 +162,7 @@ function Card({
         background: 'var(--bg-surface)',
         display: 'flex',
         flexDirection: 'column',
-        gap: 10,
+        gap: 12,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -139,27 +177,96 @@ function Card({
   );
 }
 
+/** Human-readable status for the current provider config. */
+function providerStatus(params: { type: AiProviderType; hasKey: boolean; error: string | null }): {
+  label: string;
+  tone: string;
+} {
+  if (params.error) return { label: 'Needs setup', tone: 'var(--sunset-500, #FF8B62)' };
+  switch (params.type) {
+    case 'built_in':
+      return { label: 'Ready', tone: 'var(--evergreen-500)' };
+    case 'local_model':
+      return { label: 'Coming soon', tone: 'var(--fg-3)' };
+    case 'gemini_byok':
+    case 'openrouter_byok':
+      return params.hasKey
+        ? { label: 'Connected', tone: 'var(--evergreen-500)' }
+        : { label: 'Needs key', tone: 'var(--sunset-500, #FF8B62)' };
+    case 'custom':
+      return { label: 'Connected', tone: 'var(--evergreen-500)' };
+  }
+}
+
 export function AiSetupPage() {
-  const { config, setAiProvider, clearAiProvider } = useAiProvider();
+  const { config, setAiProvider, clearAiProvider, activeModelProvider, providerError } = useAiProvider();
   const activeType: AiProviderType = config.type;
 
-  // Gemini section state
+  // ── Gemini ─────────────────────────────────────────────────────────
   const [geminiKey, setGeminiKey] = useState('');
   const [geminiModel, setGeminiModel] = useState<string>(DEFAULT_GEMINI_MODEL);
   const [geminiVal, setGeminiVal] = useState<Validation>(IDLE);
+  const [geminiClipHint, setGeminiClipHint] = useState('');
 
-  // OpenRouter section state
+  // ── OpenRouter ─────────────────────────────────────────────────────
   const [orKey, setOrKey] = useState('');
   const [orModel, setOrModel] = useState<string>(DEFAULT_OPENROUTER_FREE_MODEL);
   const [orVal, setOrVal] = useState<Validation>(IDLE);
+  const [orClipHint, setOrClipHint] = useState('');
+  const [orOAuth, setOrOAuth] = useState<Validation>(IDLE);
 
-  // Custom section state
+  // ── Custom (advanced) ──────────────────────────────────────────────
   const [showCustom, setShowCustom] = useState(false);
   const [customName, setCustomName] = useState('');
   const [customBaseUrl, setCustomBaseUrl] = useState('');
   const [customKey, setCustomKey] = useState('');
   const [customModel, setCustomModel] = useState('');
   const [customVal, setCustomVal] = useState<Validation>(IDLE);
+
+  // ── Test current provider ──────────────────────────────────────────
+  const [testResult, setTestResult] = useState<Validation>(IDLE);
+
+  // Complete an OpenRouter OAuth round-trip if we returned with ?code=...
+  useEffect(() => {
+    const code = readOAuthCodeFromUrl();
+    if (!code) return;
+    setOrOAuth({ status: 'validating', message: 'Completing OpenRouter sign-in…' });
+    void (async () => {
+      const exchanged = await exchangeOpenRouterCode({ code });
+      clearOAuthCodeFromUrl();
+      if (!exchanged.ok) {
+        setOrOAuth({ status: 'invalid', message: exchanged.message });
+        return;
+      }
+      const check = await validateOpenRouterKey({ apiKey: exchanged.key, model: orModel });
+      if (check.ok) {
+        setAiProvider({ type: 'openrouter_byok', apiKey: exchanged.key, model: orModel });
+        setOrOAuth({ status: 'valid', message: '' });
+      } else {
+        setOrOAuth({ status: 'invalid', message: check.message });
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /** Read the clipboard into a field; on failure, guide the user to paste manually. */
+  const pasteFromClipboard = async (
+    setKey: (v: string) => void,
+    setHint: (v: string) => void,
+  ) => {
+    setHint('');
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text.trim()) {
+        setKey(text.trim());
+        setHint('Pasted from clipboard.');
+      } else {
+        setHint('Clipboard was empty — paste your key into the field below.');
+      }
+    } catch {
+      setHint('Clipboard access was blocked — paste your key into the field below.');
+    }
+  };
 
   const connectGemini = async () => {
     const apiKey = geminiKey.trim();
@@ -170,12 +277,13 @@ export function AiSetupPage() {
       setAiProvider({ type: 'gemini_byok', apiKey, model: geminiModel });
       setGeminiVal({ status: 'valid', message: '' });
       setGeminiKey('');
+      setGeminiClipHint('');
     } else {
       setGeminiVal({ status: 'invalid', message: result.message });
     }
   };
 
-  const connectOpenRouter = async () => {
+  const connectOpenRouterManual = async () => {
     const apiKey = orKey.trim();
     if (!apiKey) return;
     setOrVal({ status: 'validating', message: '' });
@@ -184,8 +292,19 @@ export function AiSetupPage() {
       setAiProvider({ type: 'openrouter_byok', apiKey, model: orModel });
       setOrVal({ status: 'valid', message: '' });
       setOrKey('');
+      setOrClipHint('');
     } else {
       setOrVal({ status: 'invalid', message: result.message });
+    }
+  };
+
+  const connectOpenRouterOAuth = async () => {
+    setOrOAuth({ status: 'validating', message: 'Redirecting to OpenRouter…' });
+    try {
+      const url = await buildOpenRouterAuthUrl();
+      window.location.href = url;
+    } catch {
+      setOrOAuth({ status: 'invalid', message: 'Could not start OpenRouter sign-in. Try the manual key option below.' });
     }
   };
 
@@ -213,15 +332,28 @@ export function AiSetupPage() {
     }
   };
 
-  const useBuiltIn = () => {
-    setAiProvider({ type: 'built_in' });
+  const testCurrentProvider = async () => {
+    if (!activeModelProvider) {
+      setTestResult({ status: 'invalid', message: providerError ?? 'No provider is configured.' });
+      return;
+    }
+    setTestResult({ status: 'validating', message: '' });
+    try {
+      const reply = await activeModelProvider.generateText({
+        prompt: 'Reply with the single word OK.',
+        system: 'You are a connectivity test. Answer briefly.',
+      });
+      setTestResult({
+        status: 'valid',
+        message: `✓ ${config.displayName} responded (${reply.trim().slice(0, 40) || 'ok'}).`,
+      });
+    } catch (err) {
+      // Safe message only — provider errors never include the key.
+      setTestResult({ status: 'invalid', message: err instanceof Error ? err.message : 'Test failed.' });
+    }
   };
 
-  const selectLocal = (modelId: string) => {
-    setAiProvider({ type: 'local_model', model: modelId });
-  };
-
-  const disclosure: React.CSSProperties = { fontSize: 13, color: 'var(--fg-3)', margin: 0, lineHeight: 1.55 };
+  const status = providerStatus({ type: activeType, hasKey: Boolean(config.apiKey), error: providerError });
 
   return (
     <div
@@ -235,42 +367,109 @@ export function AiSetupPage() {
             Choose how to power your AI tutor
           </h1>
           <p style={{ ...disclosure, margin: '8px 0 0' }}>
-            You can start with cloud AI, connect your own free API key, or download a local model for offline learning.
-          </p>
-          <p style={{ ...labelStyle, margin: '10px 0 0' }}>
-            Currently active: <span style={{ color: 'var(--evergreen-500)' }}>{config.displayName}</span>
-            {config.model ? ` · ${config.model}` : ''}
+            Click connect, approve or copy your key on the provider's page, come back, and you're done. No infrastructure
+            knowledge needed.
           </p>
         </header>
 
-        {/* Built-in */}
+        {/* ── Provider status bar ── */}
+        <section
+          style={{
+            border: '1px solid var(--maestro-ink-3)',
+            borderRadius: 12,
+            padding: 16,
+            background: 'var(--bg-surface)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px 20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <span style={labelStyle}>Current provider</span>
+              <span style={{ fontSize: 14, color: 'var(--fg-1)' }}>{config.displayName}</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <span style={labelStyle}>Model</span>
+              <span style={{ fontSize: 14, color: 'var(--fg-2)' }}>{config.model ?? '—'}</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <span style={labelStyle}>Status</span>
+              <span style={{ fontSize: 14, color: status.tone }}>● {status.label}</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            <button
+              type="button"
+              style={ghostBtn(testResult.status === 'validating')}
+              disabled={testResult.status === 'validating'}
+              onClick={() => void testCurrentProvider()}
+            >
+              {testResult.status === 'validating' ? 'Testing…' : 'Test current provider'}
+            </button>
+            <button type="button" style={ghostBtn()} onClick={clearAiProvider}>
+              Reset to built-in
+            </button>
+            <Link to="/tutor-demo" style={{ color: 'var(--evergreen-500)', fontSize: 13 }}>
+              Try the tutor →
+            </Link>
+          </div>
+          {testResult.status !== 'idle' && testResult.status !== 'validating' && (
+            <p
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 12,
+                margin: 0,
+                color: testResult.status === 'valid' ? 'var(--evergreen-500)' : 'var(--sunset-500, #FF8B62)',
+              }}
+            >
+              {testResult.message}
+            </p>
+          )}
+        </section>
+
+        {/* ── Built-in ── */}
         <Card title="Use built-in AI" badge={{ text: 'Recommended', tone: 'var(--evergreen-500)' }} active={activeType === 'built_in'}>
           <p style={disclosure}>Start learning immediately. Limited free usage. Best for trying things out right away.</p>
           <div>
-            <button type="button" style={primaryBtn(activeType === 'built_in')} disabled={activeType === 'built_in'} onClick={useBuiltIn}>
+            <button type="button" style={primaryBtn(activeType === 'built_in')} disabled={activeType === 'built_in'} onClick={() => setAiProvider({ type: 'built_in' })}>
               {activeType === 'built_in' ? 'Selected' : 'Use built-in AI'}
             </button>
           </div>
         </Card>
 
-        {/* Gemini */}
+        {/* ── Gemini (guided BYOK) ── */}
         <Card title="Connect Gemini" badge={{ text: 'Free', tone: 'var(--lavender-500, #B9A7FF)' }} active={activeType === 'gemini_byok'}>
           <p style={disclosure}>
-            Use your own Gemini API key and free quota. Your usage is counted by Google, not by us. The key belongs to
-            you, stays on this device, and you can delete it anytime. Best for high-quality tutoring without downloading a
-            model.
+            Use your own Gemini API key and free quota. Usage is counted by Google, not by us. Your key stays on this
+            device and you can delete it anytime.
           </p>
+          <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <Step n={1}>Open the Gemini API key page and sign in with Google.</Step>
+            <Step n={2}>Create or select an API key, then copy it.</Step>
+            <Step n={3}>Come back here and click <strong>Paste from clipboard</strong>.</Step>
+            <Step n={4}>Click <strong>Validate &amp; connect</strong>.</Step>
+          </ol>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <a href={GEMINI_KEY_PAGE} target="_blank" rel="noopener noreferrer" style={primaryBtn(false)}>
+              Open Gemini key page ↗
+            </a>
+            <button type="button" style={ghostBtn()} onClick={() => void pasteFromClipboard(setGeminiKey, setGeminiClipHint)}>
+              Paste from clipboard
+            </button>
+          </div>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={labelStyle}>Gemini API key</span>
             <input
               type="password"
               value={geminiKey}
               onChange={(e) => setGeminiKey(e.target.value)}
-              placeholder="Paste your Gemini API key"
+              placeholder="Paste your Gemini API key (or use the button above)"
               style={field}
               autoComplete="off"
             />
           </label>
+          {geminiClipHint && <p style={{ ...disclosure, fontSize: 12, margin: 0 }}>{geminiClipHint}</p>}
           <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={labelStyle}>Model (default is cheapest)</span>
             <select value={geminiModel} onChange={(e) => setGeminiModel(e.target.value)} style={field}>
@@ -286,80 +485,101 @@ export function AiSetupPage() {
               disabled={!geminiKey.trim() || geminiVal.status === 'validating'}
               onClick={() => void connectGemini()}
             >
-              Validate &amp; connect Gemini
+              Validate &amp; connect
             </button>
           </div>
           <ValidationLine v={geminiVal} />
         </Card>
 
-        {/* OpenRouter */}
+        {/* ── OpenRouter (OAuth primary + manual fallback) ── */}
         <Card title="Connect OpenRouter" badge={{ text: 'Free', tone: 'var(--lavender-500, #B9A7FF)' }} active={activeType === 'openrouter_byok'}>
           <p style={disclosure}>
-            Use free OpenRouter models with your own account. OpenRouter gives access to many models; some are free with
-            usage limits. Usage is counted against your OpenRouter account. Good for trying multiple models without
-            downloading anything.
+            Access many models (some free) with your own OpenRouter account. Usage is counted against your account. The
+            fastest way is one-click sign-in — you approve on OpenRouter and we receive a key you control.
           </p>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span style={labelStyle}>OpenRouter API key</span>
-            <input
-              type="password"
-              value={orKey}
-              onChange={(e) => setOrKey(e.target.value)}
-              placeholder="Paste your OpenRouter API key"
-              style={field}
-              autoComplete="off"
-            />
-          </label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span style={labelStyle}>Model</span>
-            <input value={orModel} onChange={(e) => setOrModel(e.target.value)} placeholder={DEFAULT_OPENROUTER_FREE_MODEL} style={field} />
-          </label>
           <div>
-            <button
-              type="button"
-              style={primaryBtn(!orKey.trim() || orVal.status === 'validating')}
-              disabled={!orKey.trim() || orVal.status === 'validating'}
-              onClick={() => void connectOpenRouter()}
-            >
-              Validate &amp; connect OpenRouter
+            <button type="button" style={primaryBtn(orOAuth.status === 'validating')} disabled={orOAuth.status === 'validating'} onClick={() => void connectOpenRouterOAuth()}>
+              {orOAuth.status === 'validating' ? 'Connecting…' : 'Connect with OpenRouter (1-click) ↗'}
             </button>
           </div>
-          <ValidationLine v={orVal} />
+          <ValidationLine v={orOAuth} />
+
+          <details>
+            <summary style={{ ...labelStyle, cursor: 'pointer', color: 'var(--fg-3)' }}>Or connect with a key manually</summary>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+              <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <Step n={1}>Open the OpenRouter keys page and sign in (or create an account).</Step>
+                <Step n={2}>Create an API key and copy it.</Step>
+                <Step n={3}>Come back, paste it, and click <strong>Validate &amp; connect</strong>.</Step>
+              </ol>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <a href={OPENROUTER_KEY_PAGE} target="_blank" rel="noopener noreferrer" style={ghostBtn()}>
+                  Open OpenRouter keys page ↗
+                </a>
+                <button type="button" style={ghostBtn()} onClick={() => void pasteFromClipboard(setOrKey, setOrClipHint)}>
+                  Paste from clipboard
+                </button>
+              </div>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <span style={labelStyle}>OpenRouter API key</span>
+                <input type="password" value={orKey} onChange={(e) => setOrKey(e.target.value)} placeholder="Paste your OpenRouter API key" style={field} autoComplete="off" />
+              </label>
+              {orClipHint && <p style={{ ...disclosure, fontSize: 12, margin: 0 }}>{orClipHint}</p>}
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <span style={labelStyle}>Model</span>
+                <input value={orModel} onChange={(e) => setOrModel(e.target.value)} placeholder={DEFAULT_OPENROUTER_FREE_MODEL} style={field} />
+              </label>
+              <div>
+                <button
+                  type="button"
+                  style={primaryBtn(!orKey.trim() || orVal.status === 'validating')}
+                  disabled={!orKey.trim() || orVal.status === 'validating'}
+                  onClick={() => void connectOpenRouterManual()}
+                >
+                  Validate &amp; connect
+                </button>
+              </div>
+              <ValidationLine v={orVal} />
+            </div>
+          </details>
         </Card>
 
-        {/* Local model */}
+        {/* ── Local model (real setup path; runtime pending) ── */}
         <Card title="Offline model" badge={{ text: 'Offline', tone: 'var(--sunset-500, #FF8B62)' }} active={activeType === 'local_model'}>
           <p style={disclosure}>
-            Download a free local model and run the tutor on your phone. Works without internet, but requires a large
-            download (roughly 1GB–3GB) and a strong device. Performance depends on your phone.
+            Download a free local model and run the tutor on your device without internet. On-device inference is not
+            wired up yet, so downloads are marked coming soon.
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {LOCAL_MODEL_CATALOG.map((m) => (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
+            {LOCAL_MODEL_CATALOG.map((m, i) => (
               <div
                 key={m.id}
-                style={{ border: '1px solid var(--maestro-ink-3)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 6 }}
+                style={{ border: '1px solid var(--maestro-ink-3)', borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}
               >
-                <span style={{ fontSize: 14, color: 'var(--fg-1)' }}>{m.displayName}</span>
-                <span style={{ ...labelStyle, textTransform: 'none', letterSpacing: 0 }}>
-                  Download ~{(m.sizeMb / 1000).toFixed(1)}GB · storage ~{Math.ceil(m.sizeMb / 1000) + 1}GB · min RAM {m.minRamGb ?? '?'}GB ·
-                  recommended {m.recommendedRamGb ?? '?'}GB · works offline · format {m.format}
-                </span>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <button type="button" style={ghostBtn} onClick={() => selectLocal(m.id)}>
-                    {activeType === 'local_model' && config.model === m.id ? 'Selected' : 'Select this model'}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ fontSize: 14, color: 'var(--fg-1)' }}>{i === 0 ? 'Small model' : 'Better model'}</span>
+                  <Badge text="Coming soon" tone="var(--fg-3)" />
+                </div>
+                <span style={{ fontSize: 13, color: 'var(--fg-2)' }}>{m.displayName}</span>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 3, fontSize: 12, color: 'var(--fg-3)' }}>
+                  <li>Download: ~{(m.sizeMb / 1000).toFixed(1)} GB</li>
+                  <li>Recommended RAM: {m.recommendedRamGb ?? '?'} GB{m.minRamGb ? ` (min ${m.minRamGb} GB)` : ''}</li>
+                  <li>Works offline: yes</li>
+                  <li>Quality: {i === 0 ? 'basic tutor quality' : 'better quality, stronger device'}</li>
+                </ul>
+                <div>
+                  <button type="button" style={ghostBtn(true)} disabled title="On-device inference is not implemented yet">
+                    Download (coming soon)
                   </button>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)' }}>
-                    Download &amp; on-device inference — coming soon
-                  </span>
                 </div>
               </div>
             ))}
           </div>
         </Card>
 
-        {/* Custom (advanced) */}
+        {/* ── Custom (advanced) ── */}
         <Card title="Custom provider" badge={{ text: 'Advanced', tone: 'var(--fg-3)' }} active={activeType === 'custom'}>
-          <button type="button" style={ghostBtn} onClick={() => setShowCustom((v) => !v)}>
+          <button type="button" style={ghostBtn()} onClick={() => setShowCustom((v) => !v)}>
             {showCustom ? 'Hide advanced' : 'Add another provider manually'}
           </button>
           {showCustom && (
@@ -388,12 +608,7 @@ export function AiSetupPage() {
                 </select>
               </label>
               <div>
-                <button
-                  type="button"
-                  style={primaryBtn(customVal.status === 'validating')}
-                  disabled={customVal.status === 'validating'}
-                  onClick={() => void connectCustom()}
-                >
+                <button type="button" style={primaryBtn(customVal.status === 'validating')} disabled={customVal.status === 'validating'} onClick={() => void connectCustom()}>
                   Validate &amp; connect
                 </button>
               </div>
@@ -401,16 +616,6 @@ export function AiSetupPage() {
             </div>
           )}
         </Card>
-
-        {/* Footer actions */}
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-          <button type="button" style={ghostBtn} onClick={clearAiProvider}>
-            Delete key &amp; reset to built-in
-          </button>
-          <Link to="/tutor-demo" style={{ color: 'var(--evergreen-500)', fontSize: 13 }}>
-            Try the tutor →
-          </Link>
-        </div>
       </div>
     </div>
   );
