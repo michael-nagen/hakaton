@@ -1,0 +1,201 @@
+{
+  "id": "course-js-promises-101",
+  "title": "JavaScript Promises 101",
+  "description": "A short, hands-on introduction to asynchronous JavaScript: why async code exists, what a Promise is and its three states, and how to consume a Promise with .then and .catch.",
+  "goal": "Read and write basic Promise-based code: explain why async matters, describe a Promise's three states, and consume a Promise with .then/.catch.",
+  "version": "1.0.0",
+  "units": [
+    {
+      "id": "js-promises-unit-1-why-async-and-what-is-a-promise",
+      "title": "Why Async, and What a Promise Is",
+      "goal": "Explain why asynchronous code exists and describe what a Promise is, including its three states.",
+      "order": 1,
+      "teacherBrain": {
+        "persona": "A patient front-end engineer who remembers being confused by async the first time.",
+        "tone": "Encouraging, concrete, jargon-light.",
+        "objectives": [
+          "Make the blocking problem concrete before introducing Promises.",
+          "Have the learner name the three Promise states (pending, fulfilled, rejected)."
+        ],
+        "guidelines": [
+          "Start from the 'frozen page' problem before any Promise vocabulary.",
+          "Use the 'receipt for a meal' analogy for what a Promise represents.",
+          "After explaining the three states, ask the learner to name them back.",
+          "Ground every explanation in the provided knowledge chunks."
+        ],
+        "constraints": [
+          "Do not introduce .then/.catch yet — that is unit 2 (doNotTeachYet).",
+          "Do not introduce async/await at all in this course.",
+          "If asked how to consume a Promise, say it is the next unit and steer back to states."
+        ],
+        "systemPromptSeed": "You are teaching unit 1. Assume the learner knows basic JS but has never used async. Advance the learner only once they can state, in their own words, the blocking problem and the three Promise states. If they confuse 'pending' with 'rejected', stop and contrast the two with one example each."
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "js-promises-unit-1-kb-1",
+          "unitId": "js-promises-unit-1-why-async-and-what-is-a-promise",
+          "title": "The blocking problem",
+          "content": "JavaScript runs on a single thread, so it can only do one thing at a time. If a slow task (like waiting for a network response) runs synchronously, everything else stops: the page freezes and clicks do nothing until it finishes. Asynchronous code solves this by starting the slow task and letting the program keep responding, then handling the result later.",
+          "tags": ["async", "single-thread", "blocking", "responsiveness"],
+          "source": "course-author"
+        },
+        {
+          "id": "js-promises-unit-1-kb-2",
+          "unitId": "js-promises-unit-1-why-async-and-what-is-a-promise",
+          "title": "What a Promise represents",
+          "content": "A Promise is an object that represents a value that is not available yet — the eventual result of an asynchronous operation. A useful analogy: it is like a receipt for a meal you ordered. You do not have the meal yet, but you hold something that will later turn into the meal, or into an apology if the kitchen fails.",
+          "tags": ["promise", "definition", "async", "analogy"],
+          "source": "course-author"
+        },
+        {
+          "id": "js-promises-unit-1-kb-3",
+          "unitId": "js-promises-unit-1-why-async-and-what-is-a-promise",
+          "title": "The three states",
+          "content": "A Promise is always in one of three states: pending (the initial state, still waiting), fulfilled (the operation succeeded and produced a value), or rejected (the operation failed and produced a reason). Once a Promise is fulfilled or rejected it is 'settled' and can never change state again.",
+          "tags": ["states", "pending", "fulfilled", "rejected", "settled"],
+          "source": "course-author"
+        }
+      ],
+      "questions": [
+        {
+          "id": "js-promises-unit-1-q-1",
+          "prompt": "In your own words, why does asynchronous code exist? Use the idea of a single thread.",
+          "type": "open",
+          "answer": "Because JavaScript runs on a single thread, a slow synchronous task blocks everything and freezes the page; async lets the program start the task and stay responsive, handling the result later.",
+          "hints": [
+            { "id": "js-promises-unit-1-q-1-h-1", "order": 1, "text": "What happens to the page while a slow synchronous task runs?" },
+            { "id": "js-promises-unit-1-q-1-h-2", "order": 2, "text": "Connect it to JavaScript doing one thing at a time." }
+          ],
+          "difficulty": "beginner"
+        },
+        {
+          "id": "js-promises-unit-1-q-2",
+          "prompt": "Which of these is NOT one of the three Promise states?",
+          "type": "mcq",
+          "options": ["pending", "fulfilled", "rejected", "waiting"],
+          "answer": "waiting",
+          "hints": [
+            { "id": "js-promises-unit-1-q-2-h-1", "order": 1, "text": "Three of these are real states; one is a made-up synonym." }
+          ],
+          "difficulty": "beginner"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "js-promises-unit-1-cm-1",
+          "mistake": "Thinking a Promise's value is available immediately (synchronously).",
+          "correction": "A Promise represents a value that is not ready yet; you get the value later when it settles, not on the line where the Promise is created.",
+          "relatedQuestionId": "js-promises-unit-1-q-1"
+        },
+        {
+          "id": "js-promises-unit-1-cm-2",
+          "mistake": "Confusing 'pending' with 'rejected'.",
+          "correction": "Pending means still waiting (not settled); rejected means it already finished with an error. Contrast: a request in flight is pending; a request that failed is rejected."
+        }
+      ]
+    },
+    {
+      "id": "js-promises-unit-2-consuming-with-then-catch",
+      "title": "Consuming Promises with .then and .catch",
+      "goal": "Consume a Promise using .then for the success value and .catch for errors.",
+      "order": 2,
+      "teacherBrain": {
+        "persona": "A hands-on engineer who teaches by reading real snippets line by line.",
+        "tone": "Clear, example-driven, supportive.",
+        "objectives": [
+          "Have the learner attach .then to read a fulfilled value.",
+          "Have the learner attach .catch to handle a rejection."
+        ],
+        "guidelines": [
+          "Recall the three states from unit 1 in one sentence before starting.",
+          "Walk through a fetch().then().catch() snippet line by line.",
+          "Ask the learner which callback runs on success and which on failure.",
+          "Ground explanations in the provided knowledge chunks."
+        ],
+        "constraints": [
+          "Do not introduce async/await.",
+          "Keep to .then and .catch; deep chaining beyond one step is optional and not required."
+        ],
+        "systemPromptSeed": "You are teaching unit 2. Assume the learner completed unit 1 and can name the three states. Advance only once they can say that .then handles the fulfilled value and .catch handles a rejection. If the learner forgets error handling, point out that without .catch a rejection becomes an unhandled error."
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "js-promises-unit-2-kb-1",
+          "unitId": "js-promises-unit-2-consuming-with-then-catch",
+          "title": ".then handles the value",
+          "content": "You read a Promise's result with .then. The function you pass to .then runs only when the Promise fulfills, and it receives the resolved value as its argument. For example, fetch('/data.json').then((response) => response.json()) runs the callback once the response has arrived.",
+          "tags": ["then", "fulfilled", "value", "callback"],
+          "source": "course-author"
+        },
+        {
+          "id": "js-promises-unit-2-kb-2",
+          "unitId": "js-promises-unit-2-consuming-with-then-catch",
+          "title": ".catch handles errors",
+          "content": "You handle failure with .catch. The function you pass to .catch runs when the Promise rejects, and it receives the error reason. Attaching .catch(error => console.error(error)) after your .then means a failed operation is handled instead of becoming an unhandled rejection.",
+          "tags": ["catch", "rejected", "error", "handling"],
+          "source": "course-author"
+        },
+        {
+          "id": "js-promises-unit-2-kb-3",
+          "unitId": "js-promises-unit-2-consuming-with-then-catch",
+          "title": "Putting it together",
+          "content": "A typical pattern chains them: fetch('/data.json').then((response) => response.json()).catch((error) => console.error(error)). The .then reads the successful value; the .catch at the end handles any rejection from the steps above it. Each .then returns a new Promise, which is why they can be chained.",
+          "tags": ["pattern", "then", "catch", "chaining"],
+          "source": "course-author"
+        }
+      ],
+      "questions": [
+        {
+          "id": "js-promises-unit-2-q-1",
+          "prompt": "In fetch(url).then(a).catch(b), which callback runs if the request succeeds, and which runs if it fails?",
+          "type": "short",
+          "answer": "a runs on success (fulfillment); b runs on failure (rejection).",
+          "hints": [
+            { "id": "js-promises-unit-2-q-1-h-1", "order": 1, "text": "Match .then to one state and .catch to another." }
+          ],
+          "difficulty": "beginner"
+        },
+        {
+          "id": "js-promises-unit-2-q-2",
+          "prompt": "What is the risk of omitting .catch when consuming a Promise that might reject?",
+          "type": "open",
+          "answer": "The rejection is not handled, becoming an unhandled promise rejection — the error is effectively swallowed or surfaces as a runtime warning/error instead of being dealt with.",
+          "hints": [
+            { "id": "js-promises-unit-2-q-2-h-1", "order": 1, "text": "Think about what happens to the error reason with no handler." }
+          ],
+          "difficulty": "beginner"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "js-promises-unit-2-cm-1",
+          "mistake": "Forgetting to handle rejection with .catch.",
+          "correction": "Add .catch after your .then so a failed operation is handled; without it, a rejection becomes an unhandled error.",
+          "relatedQuestionId": "js-promises-unit-2-q-2"
+        },
+        {
+          "id": "js-promises-unit-2-cm-2",
+          "mistake": "Expecting .then to run immediately, in order with surrounding synchronous code.",
+          "correction": "The .then callback runs later, only once the Promise settles — after the current synchronous code has finished."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "author": "Course Factory (hand-authored sample)",
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z",
+    "language": "en",
+    "level": "beginner",
+    "tags": ["javascript", "promises", "async", "fundamentals"],
+    "estimatedDurationMinutes": 20
+  },
+  "reusableMetadata": {
+    "reusable": true,
+    "domain": "frontend",
+    "topics": ["javascript", "async", "promises"],
+    "prerequisites": ["basic-javascript"],
+    "embeddingModel": "none",
+    "ragIndexed": false
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "course-factory",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Offline, CLI-first CoursePackage authoring harness for the Maestro-style learning runtime. Strong model prepares the course; the weak runtime model only teaches it.",
+  "scripts": {
+    "plan": "tsx src/index.ts plan",
+    "generate": "tsx src/index.ts generate",
+    "validate": "tsx src/index.ts validate",
+    "repair": "tsx src/index.ts repair",
+    "register": "tsx src/index.ts register",
+    "preview": "tsx src/index.ts preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.0"
+  }
+}

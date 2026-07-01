@@ -1,0 +1,12 @@
+node_modules/
+.env
+*.log
+
+# Run artifacts are local debugging output — keep the folder, ignore contents.
+runs/*
+!runs/.gitkeep
+
+# Generated courses are local output — keep the folder and the committed sample.
+output/*
+!output/.gitkeep
+!output/example-course.final.json
