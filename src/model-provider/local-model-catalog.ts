@@ -48,6 +48,12 @@ export type LocalModelConfig = {
   fileName?: string;
   /** Optional integrity checksum for the downloaded file. */
   checksumSha256?: string | null;
+  /** Target inference runtime, from the manifest (informational until a runtime ships). */
+  runtime?: string;
+  /** Provenance of the download URL — should be "approved" for anything shippable. */
+  source?: string;
+  /** License note; must be cleared before a real URL is shipped. */
+  license?: string;
 };
 
 /**
@@ -85,7 +91,7 @@ export const LOCAL_MODEL_CATALOG: readonly LocalModelConfig[] = [
     installStatus: 'download_url_missing',
     format: 'gguf_or_runtime_specific',
     downloadUrl: null,
-    fileName: 'llama-3.2-3b-better-offline.gguf',
+    fileName: 'llama-3.2-3b-instruct-q4.gguf',
     checksumSha256: null,
   },
 ];

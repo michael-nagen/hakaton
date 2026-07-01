@@ -20,6 +20,9 @@ import {
   writeLocalModelState,
   clearLocalModelState,
   effectiveInstallStatus,
+  loadLocalModelManifest,
+  mergeManifestIntoCatalog,
+  localInferenceRuntime,
 } from '../model-provider';
 import type { AiProviderType, LocalModelConfig, LocalModelInstallStatus, LocalModelState } from '../model-provider';
 
@@ -190,6 +193,7 @@ function providerStatus(params: {
   hasKey: boolean;
   error: string | null;
   localStatus?: LocalModelInstallStatus;
+  localRuntimeReady?: boolean;
 }): {
   label: string;
   tone: string;
@@ -202,7 +206,9 @@ function providerStatus(params: {
     case 'local_model':
       switch (params.localStatus) {
         case 'installed':
-          return { label: 'Installed · runtime missing', tone: warn };
+          return params.localRuntimeReady
+            ? { label: 'Ready offline', tone: 'var(--evergreen-500)' }
+            : { label: 'Installed · runtime not connected', tone: warn };
         case 'downloading':
           return { label: 'Downloading…', tone: 'var(--fg-3)' };
         case 'error':
@@ -251,15 +257,29 @@ export function AiSetupPage() {
   const [testResult, setTestResult] = useState<Validation>(IDLE);
 
   // ── Local model download state (per model) ─────────────────────────
+  // `models` starts from the static catalog and is overlaid with the approved
+  // manifest (download URLs etc.) once it loads.
+  const [models, setModels] = useState<LocalModelConfig[]>(() => LOCAL_MODEL_CATALOG.slice());
   const [localStates, setLocalStates] = useState<Record<string, LocalModelState>>({});
+  const [runtimeReady, setRuntimeReady] = useState<Record<string, boolean>>({});
   const aborters = useRef<Record<string, AbortController>>({});
 
-  // Reconcile persisted state with what's actually in storage, on mount.
+  // Load the controlled manifest, merge approved fields into the catalog, then
+  // reconcile each model's persisted state with what's actually in storage.
+  // Order matters: reconciliation must use the MERGED models so a configured
+  // download URL correctly yields 'not_installed' rather than 'url missing'.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
+      const manifest = await loadLocalModelManifest();
+      if (cancelled) return;
+      const merged = mergeManifestIntoCatalog({ manifest });
+      setModels(merged);
+
+      const ready: Record<string, boolean> = {};
       const entries: Record<string, LocalModelState> = {};
-      for (const m of LOCAL_MODEL_CATALOG) {
+      for (const m of merged) {
+        ready[m.id] = await localInferenceRuntime.isSupported({ modelId: m.id });
         const persisted = readLocalModelState({ modelId: m.id });
         const hasFile = await localModelStorage.hasModelFile({ modelId: m.id });
         let statusValue: LocalModelInstallStatus = effectiveInstallStatus({ model: m, state: persisted });
@@ -275,7 +295,10 @@ export function AiSetupPage() {
           updatedAt: persisted?.updatedAt ?? '',
         };
       }
-      if (!cancelled) setLocalStates(entries);
+      if (!cancelled) {
+        setRuntimeReady(ready);
+        setLocalStates(entries);
+      }
     })();
     return () => {
       cancelled = true;
@@ -474,6 +497,7 @@ export function AiSetupPage() {
     hasKey: Boolean(config.apiKey),
     error: providerError,
     localStatus: activeType === 'local_model' ? localStates[config.model ?? '']?.status : undefined,
+    localRuntimeReady: activeType === 'local_model' ? runtimeReady[config.model ?? ''] : undefined,
   });
 
   // Status-bar labels: show the provider category and a human model name.
@@ -679,16 +703,19 @@ export function AiSetupPage() {
             a model is downloaded, tutor responses stay disabled until an on-device runtime ships — we won't fake it.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
-            {LOCAL_MODEL_CATALOG.map((m) => {
+            {models.map((m) => {
               const selected = activeType === 'local_model' && config.model === m.id;
               const st = localStates[m.id];
               const status = localStatusOf(m);
               const doneMb = Math.round((st?.downloadedBytes ?? 0) / 1_000_000);
               const totalMb = st?.totalBytes ? Math.round(st.totalBytes / 1_000_000) : Math.round(m.estimatedSizeMb);
               const percent = st?.totalBytes ? Math.min(100, Math.round(((st.downloadedBytes ?? 0) / st.totalBytes) * 100)) : undefined;
+              const ready = runtimeReady[m.id] === true;
               const badge =
                 status === 'installed'
-                  ? { text: 'Downloaded', tone: 'var(--evergreen-500)' }
+                  ? ready
+                    ? { text: 'Ready offline', tone: 'var(--evergreen-500)' }
+                    : { text: 'Downloaded', tone: 'var(--evergreen-500)' }
                   : status === 'downloading'
                     ? { text: 'Downloading', tone: 'var(--fg-3)' }
                     : status === 'error'
@@ -771,8 +798,8 @@ export function AiSetupPage() {
 
                   {status === 'installed' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--fg-3)' }}>
-                        Downloaded · runtime not installed yet
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: ready ? 'var(--evergreen-500)' : 'var(--fg-3)' }}>
+                        {ready ? 'Ready offline' : 'Downloaded · runtime not connected yet'}
                       </span>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         <button

@@ -80,6 +80,29 @@ export async function downloadLocalModel(params: {
   }
 
   const blob = new Blob(chunks);
+
+  // Validate completeness when the server told us the size.
+  if (totalBytes !== undefined && blob.size !== totalBytes) {
+    throw new Error(`Download incomplete (${blob.size} of ${totalBytes} bytes). Please retry.`);
+  }
+
+  // Verify integrity when a checksum is configured — reject a corrupted file
+  // BEFORE it is stored, so we never persist a bad model.
+  if (model.checksumSha256) {
+    const actual = await sha256Hex(blob);
+    if (actual.toLowerCase() !== model.checksumSha256.toLowerCase()) {
+      throw new Error('Downloaded file failed checksum verification. Please retry.');
+    }
+  }
+
   const saved = await storage.saveModelFile({ modelId: model.id, fileName, blob });
   return { modelId: model.id, localPath: saved.localPath, downloadedBytes: blob.size || downloadedBytes };
+}
+
+/** SHA-256 of a blob as a lowercase hex string. */
+async function sha256Hex(blob: Blob): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }

@@ -1,17 +1,20 @@
-// ── Model Provider — local model (runtime pending) ───────────────────
+// ── Model Provider — local model (runtime-seam backed) ───────────────
 //
-// Satisfies the ModelProvider seam so the offline path is a first-class citizen.
-// It does NOT run inference and does NOT fall back to the mock. generateText
-// inspects storage and throws one of two typed, catchable errors so the UI/tutor
-// can show precise guidance:
-//   • file not downloaded yet  → LocalModelFileNotDownloadedError
-//   • downloaded, no runtime   → LocalModelRuntimeNotImplementedError
-// When a real runtime lands, replace the final throw with inference over the
-// downloaded file — callers stay unchanged.
+// Satisfies the ModelProvider seam for the offline path. It does NOT fake
+// answers and does NOT fall back to the mock. generateText:
+//   1. if the model file isn't downloaded → LocalModelFileNotDownloadedError
+//   2. else ask the LocalInferenceRuntime to run it
+//        • Noop runtime (today) → LocalModelRuntimeNotImplementedError
+//        • a real runtime later → loads the downloaded file and generates
+// Both errors are typed + friendly so the UI/tutor can guide the user without
+// crashing. Wiring a real runtime is a swap in local-inference-runtime.ts — this
+// file and all callers stay unchanged.
 
 import type { ModelProvider } from './model-provider.types';
 import { DEFAULT_LOCAL_MODEL_ID, getLocalModelById } from './local-model-catalog';
 import { localModelStorage } from './local-model-storage';
+import { readLocalModelState } from './local-model-state';
+import { localInferenceRuntime, LocalModelRuntimeNotImplementedError } from './local-inference-runtime';
 
 /** Selected local model, but its file has not been downloaded yet. */
 export class LocalModelFileNotDownloadedError extends Error {
@@ -26,30 +29,24 @@ export class LocalModelFileNotDownloadedError extends Error {
   }
 }
 
-/** File is downloaded, but no on-device inference runtime is implemented yet. */
-export class LocalModelRuntimeNotImplementedError extends Error {
-  readonly modelId: string;
-  constructor(params: { modelId: string }) {
-    super(
-      'This offline model is downloaded, but local inference runtime is not implemented yet. ' +
-        'Use Gemini/OpenRouter for now or switch back to Built-in AI.',
-    );
-    this.name = 'LocalModelRuntimeNotImplementedError';
-    this.modelId = params.modelId;
-  }
-}
-
 export function createLocalModelProvider(params: { modelId?: string }): ModelProvider {
   const modelId = params.modelId ?? DEFAULT_LOCAL_MODEL_ID;
   const model = getLocalModelById({ id: modelId });
   return {
     name: 'local',
     modelName: model?.displayName ?? modelId,
-    async generateText() {
+    async generateText(args) {
       const downloaded = await localModelStorage.hasModelFile({ modelId });
       if (!downloaded) throw new LocalModelFileNotDownloadedError({ modelId });
-      // File present, but inference isn't wired up — be honest, never fake it.
-      throw new LocalModelRuntimeNotImplementedError({ modelId });
+
+      // File present — hand off to the runtime seam. Noop reports unsupported,
+      // so we surface the "runtime not connected" error rather than faking it.
+      const supported = await localInferenceRuntime.isSupported({ modelId });
+      if (!supported) throw new LocalModelRuntimeNotImplementedError({ modelId });
+
+      const state = readLocalModelState({ modelId });
+      await localInferenceRuntime.loadModel({ modelId, localPath: state?.localPath, fileName: model?.fileName });
+      return localInferenceRuntime.generateText({ prompt: args.prompt, systemPrompt: args.system });
     },
   };
 }
