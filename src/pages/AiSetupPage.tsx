@@ -282,9 +282,15 @@ export function AiSetupPage() {
         ready[m.id] = await localInferenceRuntime.isSupported({ modelId: m.id });
         const persisted = readLocalModelState({ modelId: m.id });
         let statusValue: LocalModelInstallStatus = effectiveInstallStatus({ model: m, state: persisted });
-        // WebLLM models manage their own weights (no file in our storage) — trust
-        // the persisted status. File-based models reconcile against IndexedDB.
-        if (!m.webllmModelId) {
+        if (m.webllmModelId) {
+          // WebLLM models: the browser cache is the ground truth for "downloaded".
+          // This survives refresh even if localStorage metadata was lost, and
+          // corrects stale metadata if the cache was cleared.
+          const cached = await localInferenceRuntime.isModelDownloaded({ modelId: m.id });
+          if (cached) statusValue = 'installed';
+          else if (statusValue === 'installed' || statusValue === 'downloading') statusValue = 'not_installed';
+        } else {
+          // File-based models reconcile against IndexedDB.
           const hasFile = await localModelStorage.hasModelFile({ modelId: m.id });
           if (hasFile) statusValue = 'installed';
           else if (statusValue === 'installed') statusValue = m.downloadUrl ? 'not_installed' : 'download_url_missing';
@@ -386,7 +392,13 @@ export function AiSetupPage() {
     } catch {
       // ignore — nothing to delete / storage unavailable
     }
-    void localInferenceRuntime.unload();
+    // Also purge the runtime-managed cached weights (WebLLM), not just metadata,
+    // so "Delete" genuinely frees the space and the model reads as not installed.
+    try {
+      await localInferenceRuntime.deleteDownloadedModel({ modelId: model.id });
+    } catch {
+      // best-effort
+    }
     clearLocalModelState({ modelId: model.id });
     patchLocal(model.id, {
       status: model.downloadUrl || model.webllmModelId ? 'not_installed' : 'download_url_missing',
@@ -838,7 +850,7 @@ export function AiSetupPage() {
                   {status === 'installed' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: ready ? 'var(--evergreen-500)' : 'var(--fg-3)' }}>
-                        {ready ? 'Ready offline' : 'Downloaded · runtime not connected yet'}
+                        {ready ? 'Ready offline' : 'Downloaded · local runtime not ready on this browser'}
                       </span>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         <button

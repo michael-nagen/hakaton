@@ -29,6 +29,7 @@ import type { LessonMessage, LessonSessionState, LessonStatus, StepDescriptor } 
 // instead of a divergent, hand-maintained string.
 const DISPLAY_SAFE_ERRORS = new Set([
   'LocalModelFileNotDownloadedError',
+  'LocalModelRuntimeNotReadyError',
   'LocalModelRuntimeNotImplementedError',
   'LocalModelWebGpuUnavailableError',
   'RateLimitError',

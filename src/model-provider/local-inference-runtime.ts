@@ -21,10 +21,18 @@ export interface LocalModelLoadProgress {
 export interface LocalInferenceRuntime {
   /** Can this runtime run the given model on this device right now? */
   isSupported(args: { modelId: string }): Promise<boolean>;
+  /**
+   * Are this model's weights already in the browser's persistent cache?
+   * Ground truth for "downloaded" — survives refresh independently of any
+   * metadata we keep in localStorage.
+   */
+  isModelDownloaded(args: { modelId: string }): Promise<boolean>;
   /** Load (download + cache on first use) a model into the runtime. */
   loadModel(args: { modelId: string; onProgress?: (p: LocalModelLoadProgress) => void }): Promise<void>;
   /** Generate text from an already-loaded model. */
   generateText(args: { prompt: string; systemPrompt?: string; maxTokens?: number }): Promise<string>;
+  /** Remove this model's cached weights from persistent storage. */
+  deleteDownloadedModel(args: { modelId: string }): Promise<void>;
   /** Release the loaded engine (best-effort). */
   unload(): Promise<void>;
 }
@@ -71,6 +79,30 @@ class WebLLMLocalInferenceRuntime implements LocalInferenceRuntime {
   async isSupported({ modelId }: { modelId: string }): Promise<boolean> {
     const model = getLocalModelById({ id: modelId });
     return !!model?.webllmModelId && webgpuAvailable();
+  }
+
+  async isModelDownloaded({ modelId }: { modelId: string }): Promise<boolean> {
+    const model = getLocalModelById({ id: modelId });
+    if (!model?.webllmModelId) return false;
+    try {
+      const { hasModelInCache } = await import('@mlc-ai/web-llm');
+      return await hasModelInCache(model.webllmModelId);
+    } catch {
+      // Cache probe failed (e.g. storage unavailable) — treat as not downloaded.
+      return false;
+    }
+  }
+
+  async deleteDownloadedModel({ modelId }: { modelId: string }): Promise<void> {
+    const model = getLocalModelById({ id: modelId });
+    if (!model?.webllmModelId) return;
+    if (this.loadedWebllmId === model.webllmModelId) await this.unload();
+    try {
+      const { deleteModelAllInfoInCache } = await import('@mlc-ai/web-llm');
+      await deleteModelAllInfoInCache(model.webllmModelId);
+    } catch {
+      // best-effort — nothing cached / storage unavailable
+    }
   }
 
   async loadModel({

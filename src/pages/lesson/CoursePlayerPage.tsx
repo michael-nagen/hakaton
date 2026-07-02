@@ -229,6 +229,16 @@ function LessonPlayer({
         </div>
       </div>
 
+      {/* The real generated question the learner is working on right now. */}
+      {session.currentStep && session.status !== 'completed' && (
+        <div style={{ ...SURFACE, marginBottom: 16, borderColor: 'var(--maestro-paper-3)' }}>
+          <p style={{ ...LABEL, margin: '0 0 8px' }}>Current question</p>
+          <p style={{ fontFamily: 'var(--font-text)', fontSize: 15, lineHeight: 1.55, color: 'var(--fg-1)', margin: 0 }}>
+            {session.currentStep.question}
+          </p>
+        </div>
+      )}
+
       <LessonChat
         messages={session.messages}
         loading={session.loading}
