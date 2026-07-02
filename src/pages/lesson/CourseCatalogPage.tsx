@@ -4,8 +4,9 @@
 // into the course player. Rendered inside AppShell (sidebar/topbar chrome).
 
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AppIcon } from '../../components/AppIcon';
+import { useAiProvider } from '../../contexts/AiProviderContext';
 import { getPrebuiltCourses } from '../../course-package';
 import { loadCourseProgress } from '../../lesson-runtime';
 
@@ -36,18 +37,26 @@ const PILL: React.CSSProperties = {
 
 export function CourseCatalogPage() {
   const navigate = useNavigate();
+  const { config } = useAiProvider();
   const courses = useMemo(() => getPrebuiltCourses(), []);
 
   return (
     <div style={{ width: '100%', maxWidth: 980, margin: '0 auto', padding: 'clamp(20px,4vw,40px) clamp(16px,4vw,48px) 96px' }}>
-      <button
-        type="button"
-        onClick={() => navigate('/')}
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: 'var(--fg-3)', fontFamily: 'var(--font-mono)', fontSize: 12, cursor: 'pointer', padding: 0, marginBottom: 20 }}
-      >
-        <AppIcon name="chevronL" size={15} />
-        Back to apps
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
+        <button
+          type="button"
+          onClick={() => navigate('/ai-setup')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: 'var(--fg-3)', fontFamily: 'var(--font-mono)', fontSize: 12, cursor: 'pointer', padding: 0 }}
+        >
+          <AppIcon name="chevronL" size={15} />
+          AI guide
+        </button>
+        {/* Which AI is leading the lessons — set on Screen 1. */}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)' }}>
+          Tutor: <span style={{ color: 'var(--fg-2)' }}>{config.displayName}</span>
+          <Link to="/ai-setup" style={{ color: 'var(--evergreen-500)', textDecoration: 'none' }}>Change</Link>
+        </span>
+      </div>
 
       <p style={{ ...LABEL, margin: '0 0 12px' }}>Courses</p>
       <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 30, lineHeight: 1.1, letterSpacing: '-0.01em', margin: '0 0 10px', color: 'var(--fg-2)' }}>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAiProvider } from '../contexts/AiProviderContext';
 import {
   DEFAULT_GEMINI_MODEL,
@@ -527,6 +527,8 @@ export function AiSetupPage() {
     }
   };
 
+  const navigate = useNavigate();
+
   const status = providerStatus({
     type: activeType,
     hasKey: Boolean(config.apiKey),
@@ -586,6 +588,10 @@ export function AiSetupPage() {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Primary CTA for the 3-screen flow: AI guide → lessons. */}
+            <button type="button" style={primaryBtn(false)} onClick={() => navigate('/courses')}>
+              Continue to lessons →
+            </button>
             <button
               type="button"
               style={ghostBtn(testResult.status === 'validating')}
@@ -597,9 +603,6 @@ export function AiSetupPage() {
             <button type="button" style={ghostBtn()} onClick={clearAiProvider}>
               Reset to built-in
             </button>
-            <Link to="/tutor-demo" style={{ color: 'var(--evergreen-500)', fontSize: 13 }}>
-              Try the tutor →
-            </Link>
           </div>
           {testResult.status !== 'idle' && testResult.status !== 'validating' && (
             <p
