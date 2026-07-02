@@ -42,6 +42,12 @@ export type LocalModelConfig = {
   /** Baseline status derived from config (download_url_missing until a URL is set). */
   installStatus: LocalModelInstallStatus;
   format: 'gguf_or_runtime_specific';
+  /**
+   * WebLLM (MLC) model id this maps to. When set, the on-device runtime
+   * (WebLLM/WebGPU) can actually run it — WebLLM fetches + caches the weights
+   * itself, so `downloadUrl` stays null and is unused for these models.
+   */
+  webllmModelId?: string;
   /** Final download URL — null until an official model file URL is configured. */
   downloadUrl: string | null;
   /** File name to store the download under. */
@@ -64,32 +70,34 @@ export type LocalModelConfig = {
 export const LOCAL_MODEL_CATALOG: readonly LocalModelConfig[] = [
   {
     id: 'gemma-fast-offline',
-    displayName: 'Gemma Fast Offline',
+    displayName: 'Gemma 2 2B (offline)',
     shortLabel: 'Fast Offline',
-    description: 'Small and fast local model for basic tutor flow.',
-    estimatedSizeMb: 1000,
+    description: 'Small, fast on-device model (runs in-browser via WebGPU).',
+    estimatedSizeMb: 1500,
     minRamGb: 4,
     recommendedRamGb: 6,
     qualityLabel: 'Fastest',
     modelFamily: 'gemma',
-    installStatus: 'download_url_missing',
+    installStatus: 'not_installed',
     format: 'gguf_or_runtime_specific',
+    webllmModelId: 'gemma-2-2b-it-q4f16_1-MLC',
     downloadUrl: null,
     fileName: 'gemma-fast-offline.gguf',
     checksumSha256: null,
   },
   {
     id: 'llama-better-offline',
-    displayName: 'Llama 3.2 3B Better Offline',
+    displayName: 'Llama 3.2 3B (offline)',
     shortLabel: 'Better Offline',
-    description: 'Better English tutor quality, stronger device required.',
+    description: 'Better tutor quality; runs in-browser via WebGPU, stronger device required.',
     estimatedSizeMb: 2200,
     minRamGb: 6,
     recommendedRamGb: 8,
     qualityLabel: 'Better tutor quality',
     modelFamily: 'llama',
-    installStatus: 'download_url_missing',
+    installStatus: 'not_installed',
     format: 'gguf_or_runtime_specific',
+    webllmModelId: 'Llama-3.2-3B-Instruct-q4f16_1-MLC',
     downloadUrl: null,
     fileName: 'llama-3.2-3b-instruct-q4.gguf',
     checksumSha256: null,

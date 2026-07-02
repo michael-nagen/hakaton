@@ -59,14 +59,16 @@ export function clearLocalModelState(params: { modelId: string }): void {
 
 /**
  * The effective status to show, combining catalog config with persisted state:
- *   - no URL configured  → 'download_url_missing' (overrides stale state)
- *   - persisted state    → its status
- *   - otherwise          → 'not_installed'
+ *   - runtime-managed (WebLLM) → not URL-gated: persisted status or 'not_installed'
+ *   - file-based with no URL    → 'download_url_missing' (overrides stale state)
+ *   - persisted state           → its status
+ *   - otherwise                 → 'not_installed'
  */
 export function effectiveInstallStatus(params: {
   model: LocalModelConfig;
   state: LocalModelState | null;
 }): LocalModelInstallStatus {
-  if (!params.model.downloadUrl) return 'download_url_missing';
+  const runtimeManaged = !!params.model.webllmModelId;
+  if (!runtimeManaged && !params.model.downloadUrl) return 'download_url_missing';
   return params.state?.status ?? 'not_installed';
 }

@@ -30,6 +30,7 @@ import type { LessonMessage, LessonSessionState, LessonStatus, StepDescriptor } 
 const DISPLAY_SAFE_ERRORS = new Set([
   'LocalModelFileNotDownloadedError',
   'LocalModelRuntimeNotImplementedError',
+  'LocalModelWebGpuUnavailableError',
   'RateLimitError',
 ]);
 

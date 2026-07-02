@@ -3,25 +3,25 @@
   "models": [
     {
       "id": "gemma-fast-offline",
-      "displayName": "Gemma Fast Offline",
-      "runtime": "webllm_or_llamacpp",
-      "format": "gguf_or_webllm",
+      "displayName": "Gemma 2 2B (offline)",
+      "runtime": "webllm",
+      "format": "mlc",
       "fileName": "gemma-fast-offline.gguf",
       "downloadUrl": null,
-      "source": "approved",
-      "license": "check_before_shipping",
-      "estimatedSizeMb": 1000,
+      "source": "webllm_prebuilt",
+      "license": "gemma-terms",
+      "estimatedSizeMb": 1500,
       "checksumSha256": null
     },
     {
       "id": "llama-better-offline",
-      "displayName": "Llama 3.2 3B Better Offline",
-      "runtime": "webllm_or_llamacpp",
-      "format": "gguf_or_webllm",
+      "displayName": "Llama 3.2 3B (offline)",
+      "runtime": "webllm",
+      "format": "mlc",
       "fileName": "llama-3.2-3b-instruct-q4.gguf",
       "downloadUrl": null,
-      "source": "approved",
-      "license": "check_before_shipping",
+      "source": "webllm_prebuilt",
+      "license": "llama-3.2-community",
       "estimatedSizeMb": 2200,
       "checksumSha256": null
     }

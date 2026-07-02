@@ -281,10 +281,14 @@ export function AiSetupPage() {
       for (const m of merged) {
         ready[m.id] = await localInferenceRuntime.isSupported({ modelId: m.id });
         const persisted = readLocalModelState({ modelId: m.id });
-        const hasFile = await localModelStorage.hasModelFile({ modelId: m.id });
         let statusValue: LocalModelInstallStatus = effectiveInstallStatus({ model: m, state: persisted });
-        if (hasFile) statusValue = 'installed';
-        else if (statusValue === 'installed') statusValue = m.downloadUrl ? 'not_installed' : 'download_url_missing';
+        // WebLLM models manage their own weights (no file in our storage) — trust
+        // the persisted status. File-based models reconcile against IndexedDB.
+        if (!m.webllmModelId) {
+          const hasFile = await localModelStorage.hasModelFile({ modelId: m.id });
+          if (hasFile) statusValue = 'installed';
+          else if (statusValue === 'installed') statusValue = m.downloadUrl ? 'not_installed' : 'download_url_missing';
+        }
         entries[m.id] = {
           modelId: m.id,
           status: statusValue,
@@ -312,7 +316,37 @@ export function AiSetupPage() {
     });
   };
 
+  // WebLLM models manage their own weights: "download" = warm up the runtime
+  // (CreateMLCEngine), which fetches + caches the weights and reports progress.
+  const warmUpLocalModel = async (model: LocalModelConfig) => {
+    const totalBytes = Math.round(model.estimatedSizeMb * 1_000_000);
+    patchLocal(model.id, { status: 'downloading', downloadedBytes: 0, totalBytes, errorMessage: undefined });
+    writeLocalModelState({ state: { modelId: model.id, status: 'downloading', downloadedBytes: 0 } });
+    try {
+      await localInferenceRuntime.loadModel({
+        modelId: model.id,
+        onProgress: (p) =>
+          patchLocal(model.id, {
+            status: 'downloading',
+            downloadedBytes: Math.round(p.progress * totalBytes),
+            totalBytes,
+          }),
+      });
+      patchLocal(model.id, { status: 'installed', downloadedBytes: totalBytes, totalBytes });
+      writeLocalModelState({ state: { modelId: model.id, status: 'installed' } });
+      setRuntimeReady((prev) => ({ ...prev, [model.id]: true }));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Model load failed.';
+      patchLocal(model.id, { status: 'error', errorMessage: message });
+      writeLocalModelState({ state: { modelId: model.id, status: 'error', errorMessage: message } });
+    }
+  };
+
   const startDownload = async (model: LocalModelConfig) => {
+    if (model.webllmModelId) {
+      await warmUpLocalModel(model);
+      return;
+    }
     if (!model.downloadUrl) return;
     const controller = new AbortController();
     aborters.current[model.id] = controller;
@@ -352,9 +386,10 @@ export function AiSetupPage() {
     } catch {
       // ignore — nothing to delete / storage unavailable
     }
+    void localInferenceRuntime.unload();
     clearLocalModelState({ modelId: model.id });
     patchLocal(model.id, {
-      status: model.downloadUrl ? 'not_installed' : 'download_url_missing',
+      status: model.downloadUrl || model.webllmModelId ? 'not_installed' : 'download_url_missing',
       downloadedBytes: 0,
       totalBytes: undefined,
       localPath: undefined,
@@ -699,8 +734,9 @@ export function AiSetupPage() {
         {/* ── Local model (download + runtime pending) ── */}
         <Card title="Offline model" badge={{ text: 'Offline', tone: 'var(--sunset-500, #FF8B62)' }} active={activeType === 'local_model'}>
           <p style={disclosure}>
-            Download a model to your device and run the tutor offline. Downloading is separate from inference: even after
-            a model is downloaded, tutor responses stay disabled until an on-device runtime ships — we won't fake it.
+            Download a model to your device and run the tutor fully offline via WebGPU (WebLLM). The first download is
+            large (~1.5–2.2 GB) and cached in your browser; it requires a recent Chrome or Edge with WebGPU. After that,
+            responses are generated on-device — nothing leaves your machine.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
             {models.map((m) => {
