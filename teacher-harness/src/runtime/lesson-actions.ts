@@ -4,7 +4,13 @@
 // The model may *suggest* an action (parsed from an optional JSON envelope in
 // its reply). The HARNESS validates that suggestion against the current lesson
 // state and the set of actions enabled for the MVP, and only the harness
-// applies any resulting state change (e.g. marking a lesson completed).
+// applies any resulting state change.
+//
+// LESSON COMPLETION IS CURRENTLY DISABLED: while tutor quality and lesson flow
+// are still being evaluated, the harness never marks a lesson completed and
+// never unlocks a next lesson — `complete_lesson` stays in the vocabulary for
+// future compatibility but is not executable. The MVP focuses on running tutor
+// turns, maintaining lesson memory, scoring behavior, and saving artifacts.
 //
 // The action vocabulary is intentionally broader than what the MVP executes,
 // so new actions can be enabled later without reshaping callers.
@@ -25,11 +31,14 @@ export type LessonActionType =
  * Actions the harness will actually execute in the MVP. Everything else is a
  * recognised-but-not-enabled action: the harness acknowledges the suggestion
  * but refuses to execute it, and says why.
+ *
+ * `complete_lesson` is deliberately ABSENT: completion is disabled while tutor
+ * quality is being evaluated. Re-enabling it later is adding it back here plus
+ * restoring its case in decideAction — nothing else changes.
  */
 export const MVP_EXECUTABLE_ACTIONS: readonly LessonActionType[] = [
   'respond',
   'say_unsure',
-  'complete_lesson',
 ];
 
 const ALL_ACTIONS: readonly LessonActionType[] = [
@@ -80,6 +89,19 @@ export function decideAction(params: {
   const { suggested, state } = params;
   const next: LessonState = { ...state };
 
+  // Completion is explicitly disabled (not merely "not yet enabled") — give it
+  // a dedicated reason so reports/debug show WHY nothing happened.
+  if (suggested.type === 'complete_lesson') {
+    return {
+      suggested,
+      allowed: false,
+      executed: false,
+      reason:
+        'Lesson completion is DISABLED in the current MVP: tutor quality and lesson flow are still being evaluated, so the harness never marks a lesson completed or opens the next one. The suggestion was recorded and ignored.',
+      nextState: next,
+    };
+  }
+
   if (!MVP_EXECUTABLE_ACTIONS.includes(suggested.type)) {
     return {
       suggested,
@@ -91,30 +113,6 @@ export function decideAction(params: {
   }
 
   switch (suggested.type) {
-    case 'complete_lesson': {
-      // The harness — not the model — decides a lesson is done. In the MVP we
-      // allow it once the lesson is actually in progress.
-      if (state.lessonStatus !== 'in_progress') {
-        return {
-          suggested,
-          allowed: false,
-          executed: false,
-          reason: `Cannot complete a lesson that is "${state.lessonStatus}". The harness only completes an in-progress lesson.`,
-          nextState: next,
-        };
-      }
-      next.lessonStatus = 'completed';
-      next.currentStep = 'wrap_up';
-      next.lastTutorAction = 'complete_lesson';
-      return {
-        suggested,
-        allowed: true,
-        executed: true,
-        reason: 'Harness marked the lesson completed. (Opening the next lesson is a future action, not executed in the MVP.)',
-        nextState: next,
-      };
-    }
-
     case 'say_unsure': {
       next.lastTutorAction = 'say_unsure';
       return {

@@ -1,0 +1,410 @@
+{
+  "id": "course-python-print-101",
+  "title": "Python Printing Basics",
+  "description": "A beginner micro-course on Python's print(): what it does and its automatic new line, printing multiple values with commas, joining strings with + and str(), and repeating strings with *.",
+  "goal": "Print text and numeric values in Python correctly using print(), commas, +/str(), and *.",
+  "version": "1.0.0",
+  "units": [
+    {
+      "id": "py-print-unit-1-print-and-newline",
+      "title": "What print() Does and Why Each print() Starts a New Line",
+      "goal": "Explain what print() outputs and that each print() call ends on its own new line.",
+      "order": 1,
+      "teacherBrain": {
+        "persona": "A friendly Python instructor who teaches by predicting output together.",
+        "tone": "Encouraging, concrete, jargon-light.",
+        "objectives": [
+          "Show that print() displays a value, then moves to a new line."
+        ],
+        "guidelines": [
+          "Show a tiny two-line snippet and ask what it prints before explaining.",
+          "Ground every answer in the provided knowledge chunks."
+        ],
+        "constraints": [
+          "Do not teach commas, +, or * yet — those are later units (doNotTeachYet).",
+          "Do not teach the end= or sep= arguments; only mention the new line is the default.",
+          "Do not teach f-strings or input()."
+        ],
+        "systemPromptSeed": "You are teaching unit 1 of Python printing. Advance only once the learner can say that each print() call ends on its own line, so two prints make two lines."
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "py-print-unit-1-kb-1",
+          "unitId": "py-print-unit-1-print-and-newline",
+          "title": "print() shows a value",
+          "content": "The print() function displays whatever you put inside its parentheses on the screen. For example, print(\"Hello\") shows the text Hello. You can print text in quotes or a number like print(5).",
+          "tags": [
+            "print",
+            "output",
+            "basics"
+          ],
+          "source": "course-author"
+        },
+        {
+          "id": "py-print-unit-1-kb-2",
+          "unitId": "py-print-unit-1-print-and-newline",
+          "title": "Each print() ends with a new line",
+          "content": "After print() shows its value, it automatically moves to a new line. So two separate print() calls appear on two separate lines. Writing print(\"a\") then print(\"b\") shows a on one line and b on the next — not ab. Moving to a new line is the default behaviour.",
+          "tags": [
+            "newline",
+            "print",
+            "lines"
+          ],
+          "source": "course-author"
+        }
+      ],
+      "questions": [
+        {
+          "id": "py-print-unit-1-q-1",
+          "prompt": "You run print(\"one\") and then print(\"two\"). How many lines appear, and what is on each?",
+          "type": "short",
+          "answer": "Two lines: 'one' on the first line and 'two' on the second, because each print() ends with a new line.",
+          "hints": [
+            {
+              "id": "py-print-unit-1-q-1-h-1",
+              "order": 1,
+              "text": "Where does the cursor go after a print() finishes?"
+            }
+          ],
+          "difficulty": "beginner"
+        },
+        {
+          "id": "py-print-unit-1-q-2",
+          "prompt": "True or false: two separate print() calls always appear on the same line.",
+          "type": "mcq",
+          "options": [
+            "True",
+            "False"
+          ],
+          "answer": "False",
+          "hints": [
+            {
+              "id": "py-print-unit-1-q-2-h-1",
+              "order": 1,
+              "text": "Recall what print() does after it shows its value."
+            }
+          ],
+          "difficulty": "beginner"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "py-print-unit-1-cm-1",
+          "mistake": "Expecting two print() calls to appear on the same line.",
+          "correction": "Each print() ends by moving to a new line, so they land on separate lines. Changing that is a later lesson.",
+          "relatedQuestionId": "py-print-unit-1-q-1"
+        }
+      ]
+    },
+    {
+      "id": "py-print-unit-2-commas",
+      "title": "Printing Multiple Values with Commas",
+      "goal": "Print several values in one print() using commas, knowing a space is inserted between them.",
+      "order": 2,
+      "teacherBrain": {
+        "persona": "A friendly Python instructor who teaches by predicting output together.",
+        "tone": "Encouraging, concrete, jargon-light.",
+        "objectives": [
+          "Have the learner print mixed text and numbers with commas and predict the spaces."
+        ],
+        "guidelines": [
+          "Show print(\"Age:\", 25) and ask what it prints before explaining.",
+          "Point out the single automatic space between values.",
+          "Ground answers in the provided knowledge chunks."
+        ],
+        "constraints": [
+          "Do not teach + or * here — those are later units.",
+          "Assume unit 1 (print + new line) is done; do not re-teach it in depth."
+        ],
+        "systemPromptSeed": "You are teaching unit 2 of Python printing. Advance only once the learner can predict that commas print values in order with one space between them, mixing text and numbers freely."
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "py-print-unit-2-kb-1",
+          "unitId": "py-print-unit-2-commas",
+          "title": "Commas print multiple values",
+          "content": "You can pass several values to print() separated by commas, and it prints them in order. Python automatically puts a single space between each value. For example, print(\"Score:\", 100) prints Score: 100.",
+          "tags": [
+            "commas",
+            "print",
+            "multiple-values"
+          ],
+          "source": "course-author"
+        },
+        {
+          "id": "py-print-unit-2-kb-2",
+          "unitId": "py-print-unit-2-commas",
+          "title": "Commas mix text and numbers",
+          "content": "Commas happily combine text and numbers without any conversion. print(\"Age:\", 25) works directly — you do not need to turn the number into text first. This makes commas the easiest way to print a label next to a value.",
+          "tags": [
+            "commas",
+            "mixed-types",
+            "numbers"
+          ],
+          "source": "course-author"
+        }
+      ],
+      "questions": [
+        {
+          "id": "py-print-unit-2-q-1",
+          "prompt": "What does print(\"Score:\", 100) print?",
+          "type": "short",
+          "answer": "Score: 100 — the comma prints the values in order with a single space between them.",
+          "hints": [
+            {
+              "id": "py-print-unit-2-q-1-h-1",
+              "order": 1,
+              "text": "Commas add one space between values."
+            }
+          ],
+          "difficulty": "beginner"
+        },
+        {
+          "id": "py-print-unit-2-q-2",
+          "prompt": "Do you need to convert the number in print(\"Age:\", 25) before printing it?",
+          "type": "mcq",
+          "options": [
+            "Yes, convert it first",
+            "No, commas handle mixed text and numbers"
+          ],
+          "answer": "No, commas handle mixed text and numbers",
+          "hints": [
+            {
+              "id": "py-print-unit-2-q-2-h-1",
+              "order": 1,
+              "text": "Commas don't care about types."
+            }
+          ],
+          "difficulty": "beginner"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "py-print-unit-2-cm-1",
+          "mistake": "Expecting the comma version to print with no space between values.",
+          "correction": "The comma automatically inserts one space between values. If you need no space, that is what + (next-but-one unit) is for.",
+          "relatedQuestionId": "py-print-unit-2-q-1"
+        }
+      ]
+    },
+    {
+      "id": "py-print-unit-3-plus-and-str",
+      "title": "Joining Strings with + and Converting Numbers with str()",
+      "goal": "Join strings with + and correctly include a number by converting it with str().",
+      "order": 3,
+      "teacherBrain": {
+        "persona": "A friendly Python instructor who teaches by predicting output together.",
+        "tone": "Encouraging, concrete, jargon-light.",
+        "objectives": [
+          "Have the learner join text with + and fix a string+number error using str()."
+        ],
+        "guidelines": [
+          "Show print(\"Hello, \" + \"world\") first, then the failing string+number case.",
+          "Introduce str() as the fix, and mention commas remain an easy alternative.",
+          "Ground answers in the provided knowledge chunks."
+        ],
+        "constraints": [
+          "Do not teach * here — that is the next unit.",
+          "Do not teach f-strings.",
+          "Keep to + and str(); assume commas (unit 2) are known."
+        ],
+        "systemPromptSeed": "You are teaching unit 3 of Python printing. Advance only once the learner can explain that + joins strings and that a number must be wrapped in str() to join it to text. If they try \"Age: \" + 30, stop and show the str() fix."
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "py-print-unit-3-kb-1",
+          "unitId": "py-print-unit-3-plus-and-str",
+          "title": "+ joins strings",
+          "content": "The + operator joins (concatenates) two strings into one, with nothing added between them. print(\"Hello, \" + \"world\") prints Hello, world. Unlike commas, + does not insert a space, so you add spaces yourself inside the quotes.",
+          "tags": [
+            "plus",
+            "concatenation",
+            "strings"
+          ],
+          "source": "course-author"
+        },
+        {
+          "id": "py-print-unit-3-kb-2",
+          "unitId": "py-print-unit-3-plus-and-str",
+          "title": "Convert numbers with str()",
+          "content": "You cannot join a string and a number with +; Python raises a TypeError. Convert the number to text first with str(): print(\"Age: \" + str(25)) prints Age: 25. (A comma, like print(\"Age:\", 25), avoids the conversion entirely.)",
+          "tags": [
+            "str",
+            "conversion",
+            "typeerror",
+            "plus"
+          ],
+          "source": "course-author"
+        }
+      ],
+      "questions": [
+        {
+          "id": "py-print-unit-3-q-1",
+          "prompt": "Why does print(\"Age: \" + 30) cause an error, and how do you fix it with +?",
+          "type": "open",
+          "answer": "Because + cannot join a string and a number (TypeError). Fix it by converting the number: print(\"Age: \" + str(30)).",
+          "hints": [
+            {
+              "id": "py-print-unit-3-q-1-h-1",
+              "order": 1,
+              "text": "What types are \"Age: \" and 30?"
+            },
+            {
+              "id": "py-print-unit-3-q-1-h-2",
+              "order": 2,
+              "text": "How do you turn a number into text?"
+            }
+          ],
+          "difficulty": "beginner"
+        },
+        {
+          "id": "py-print-unit-3-q-2",
+          "prompt": "What does print(\"Hello, \" + \"world\") print?",
+          "type": "short",
+          "answer": "Hello, world — + joins the two strings with no extra space added.",
+          "hints": [
+            {
+              "id": "py-print-unit-3-q-2-h-1",
+              "order": 1,
+              "text": "+ glues strings exactly as written, including the space you typed."
+            }
+          ],
+          "difficulty": "beginner"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "py-print-unit-3-cm-1",
+          "mistake": "Using + to join a string and a number, e.g. \"Age: \" + 30.",
+          "correction": "That is a TypeError. Convert the number with str(30), or use a comma: print(\"Age:\", 30).",
+          "relatedQuestionId": "py-print-unit-3-q-1"
+        },
+        {
+          "id": "py-print-unit-3-cm-2",
+          "mistake": "Expecting + to add a space between the joined strings.",
+          "correction": "+ adds nothing between strings; include the space yourself inside the quotes, e.g. \"Hello, \" + \"world\"."
+        }
+      ]
+    },
+    {
+      "id": "py-print-unit-4-star-repeat",
+      "title": "Repeating Strings with *",
+      "goal": "Repeat a string a given number of times with the * operator.",
+      "order": 4,
+      "teacherBrain": {
+        "persona": "A friendly Python instructor who teaches by predicting output together.",
+        "tone": "Encouraging, concrete, jargon-light.",
+        "objectives": [
+          "Have the learner repeat a string with * and predict the result."
+        ],
+        "guidelines": [
+          "Show print(\"ab\" * 3) and print(\"=\" * 10) and ask what they print.",
+          "Note * repeats with no spaces added; contrast briefly with * between numbers (multiply).",
+          "Ground answers in the provided knowledge chunks."
+        ],
+        "constraints": [
+          "Do not re-teach + or commas in depth; assume earlier units are done.",
+          "Do not teach f-strings or loops."
+        ],
+        "systemPromptSeed": "You are teaching unit 4 of Python printing. Advance only once the learner can predict that \"ab\" * 3 is ababab (no spaces) and knows * between two numbers multiplies."
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "py-print-unit-4-kb-1",
+          "unitId": "py-print-unit-4-star-repeat",
+          "title": "* repeats a string",
+          "content": "The * operator repeats a string a given number of times, with nothing added between copies. print(\"ab\" * 3) prints ababab, and print(\"=\" * 10) prints ==========. This is handy for drawing simple separators.",
+          "tags": [
+            "star",
+            "repeat",
+            "strings"
+          ],
+          "source": "course-author"
+        },
+        {
+          "id": "py-print-unit-4-kb-2",
+          "unitId": "py-print-unit-4-star-repeat",
+          "title": "* between numbers multiplies",
+          "content": "Between two numbers, * is ordinary multiplication: print(4 * 3) prints 12. So * repeats when one side is a string, and multiplies when both sides are numbers.",
+          "tags": [
+            "star",
+            "multiply",
+            "numbers"
+          ],
+          "source": "course-author"
+        }
+      ],
+      "questions": [
+        {
+          "id": "py-print-unit-4-q-1",
+          "prompt": "What does print(\"ab\" * 3) print?",
+          "type": "mcq",
+          "options": [
+            "ababab",
+            "abababab",
+            "ab ab ab",
+            "an error"
+          ],
+          "answer": "ababab",
+          "hints": [
+            {
+              "id": "py-print-unit-4-q-1-h-1",
+              "order": 1,
+              "text": "* repeats the string, adding no spaces."
+            }
+          ],
+          "difficulty": "beginner"
+        },
+        {
+          "id": "py-print-unit-4-q-2",
+          "prompt": "What does print(4 * 3) print, and why is it different from repeating a string?",
+          "type": "short",
+          "answer": "12 — between two numbers * multiplies, whereas with a string one side it repeats.",
+          "hints": [
+            {
+              "id": "py-print-unit-4-q-2-h-1",
+              "order": 1,
+              "text": "Both sides are numbers here."
+            }
+          ],
+          "difficulty": "beginner"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "py-print-unit-4-cm-1",
+          "mistake": "Expecting \"ab\" * 3 to add spaces, e.g. 'ab ab ab'.",
+          "correction": "* repeats with no separator: \"ab\" * 3 is ababab.",
+          "relatedQuestionId": "py-print-unit-4-q-1"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "author": "Course Factory (hand-authored micro-lesson sample)",
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z",
+    "language": "en",
+    "level": "beginner",
+    "tags": [
+      "python",
+      "print",
+      "basics",
+      "strings"
+    ],
+    "estimatedDurationMinutes": 32
+  },
+  "reusableMetadata": {
+    "reusable": true,
+    "domain": "python",
+    "topics": [
+      "python",
+      "print",
+      "strings",
+      "operators"
+    ],
+    "prerequisites": [],
+    "embeddingModel": "none",
+    "ragIndexed": false
+  }
+}

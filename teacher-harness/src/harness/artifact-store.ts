@@ -77,6 +77,20 @@ export class ArtifactStore {
     writeJson(resolve(this.runDir, 'lesson-memory.final.json'), memory);
   }
 
+  /**
+   * Record that this run explicitly started from fresh lesson memory
+   * (--reset-memory). Memory is per-run in the MVP anyway; this artifact makes
+   * the run self-describing.
+   */
+  writeMemoryReset(): void {
+    writeJson(resolve(this.runDir, 'memory-reset.json'), {
+      memoryMode: 'fresh',
+      resetRequested: true,
+      scope: 'lesson_session',
+      note: 'Lesson memory is per-run in MVP. This run started from empty memory.',
+    });
+  }
+
   writeScenarioReport(params: { json: unknown; markdown: string }): void {
     writeJson(resolve(this.runDir, 'scenario-report.json'), params.json);
     writeText(resolve(this.runDir, 'scenario-report.md'), params.markdown);

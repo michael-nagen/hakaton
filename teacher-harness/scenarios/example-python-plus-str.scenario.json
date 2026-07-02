@@ -3,7 +3,7 @@
   "title": "Python + and str() delivery test (type error + f-string redirect)",
   "course": {
     "source": "file",
-    "path": "../course-factory/output/course-python-print-101.final.json",
+    "path": "fixtures/course-python-print-101.json",
     "courseId": "course-python-print-101"
   },
   "unitId": "py-print-unit-3-plus-and-str",

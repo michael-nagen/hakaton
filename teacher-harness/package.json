@@ -8,6 +8,7 @@
     "run": "tsx src/index.ts run",
     "batch": "tsx src/index.ts batch",
     "report": "tsx src/index.ts report",
+    "memory": "tsx src/index.ts memory",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {

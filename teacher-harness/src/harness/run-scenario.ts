@@ -31,6 +31,12 @@ export interface RunScenarioOptions {
   timestamp?: string;
   /** Emit progress lines to the console. */
   verbose?: boolean;
+  /**
+   * Explicitly requested fresh memory (--reset-memory). Memory is ALWAYS fresh
+   * per run in the MVP — prior run artifacts are never loaded as active memory —
+   * so this only records the request as a memory-reset.json artifact.
+   */
+  resetMemory?: boolean;
 }
 
 export async function runScenario(options: RunScenarioOptions): Promise<ScenarioReport> {
@@ -65,13 +71,18 @@ export async function runScenario(options: RunScenarioOptions): Promise<Scenario
     );
   }
 
-  // 4. Initialise lesson state + lesson-session memory (both owned by the harness).
+  // 4. Initialise lesson state + lesson-session memory (both owned by the
+  //    harness). ALWAYS fresh: nothing from previous runs is ever loaded.
   let state: LessonState = initLessonState({ courseId, unitId: scenario.unitId });
   let memory: LessonSessionMemory = initLessonMemory({ courseId, unitId: scenario.unitId, unit });
 
   // 5. Persist inputs up front so a crash mid-run is still debuggable.
   const store = new ArtifactStore({ scenarioId: scenario.id, timestamp });
   store.writeInputs({ scenario, coursePackage: loaded.coursePackage, unit });
+  if (options.resetMemory) {
+    store.writeMemoryReset();
+    log('  ↺ memory reset requested — run starts from empty lesson memory (recorded in memory-reset.json).');
+  }
 
   log(`▶ ${scenario.id} — unit ${scenario.unitId} — provider ${resolved.mode}/${resolved.modelName}`);
 

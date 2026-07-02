@@ -3,7 +3,7 @@
   "title": "Python print() basic delivery test (newline + future-topic redirects)",
   "course": {
     "source": "file",
-    "path": "../course-factory/output/course-python-print-101.final.json",
+    "path": "fixtures/course-python-print-101.json",
     "courseId": "course-python-print-101"
   },
   "unitId": "py-print-unit-1-print-and-newline",

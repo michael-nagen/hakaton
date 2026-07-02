@@ -1,13 +1,14 @@
 // ── Teacher Harness — CLI entrypoint ─────────────────────────────────
 //
 // Commands:
-//   run    --scenario <path> [--mock]   run one scenario
-//   batch  --scenarios <dir>  [--mock]   run every *.scenario.json in a dir
-//   report --run <runs-dir>              re-summarise existing run artifacts
+//   run    --scenario <path> [--mock] [--reset-memory]   run one scenario
+//   batch  --scenarios <dir>  [--mock] [--reset-memory]   run every *.scenario.json in a dir
+//   report --run <runs-dir>               re-summarise existing run artifacts
+//   memory --delete --run <run-dir>       delete ONLY a run's memory artifacts
 //
 // Exit code is non-zero when any scenario fails, so this composes in CI.
 
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { parseCliArgs } from './harness/cli-args';
 import { runScenario } from './harness/run-scenario';
@@ -19,9 +20,9 @@ function fail(message: string): never {
   process.exit(1);
 }
 
-async function commandRun(scenarioPath: string | undefined, mock: boolean): Promise<void> {
+async function commandRun(scenarioPath: string | undefined, mock: boolean, resetMemory: boolean): Promise<void> {
   if (!scenarioPath) fail('run requires --scenario <path>');
-  const report = await runScenario({ scenarioPath: scenarioPath as string, forceMock: mock, verbose: true });
+  const report = await runScenario({ scenarioPath: scenarioPath as string, forceMock: mock, resetMemory, verbose: true });
 
   console.log(`\n${report.passed ? '✅ PASS' : '❌ FAIL'} — ${report.scenarioId}`);
   console.log(`   turns: ${report.summary.passedTurns} passed / ${report.summary.failedTurns} failed`);
@@ -33,7 +34,7 @@ async function commandRun(scenarioPath: string | undefined, mock: boolean): Prom
   process.exit(report.passed ? 0 : 1);
 }
 
-async function commandBatch(scenariosDir: string | undefined, mock: boolean): Promise<void> {
+async function commandBatch(scenariosDir: string | undefined, mock: boolean, resetMemory: boolean): Promise<void> {
   if (!scenariosDir) fail('batch requires --scenarios <dir>');
   const dir = resolve(process.cwd(), scenariosDir as string);
   if (!existsSync(dir) || !statSync(dir).isDirectory()) fail(`Not a directory: ${dir}`);
@@ -49,7 +50,7 @@ async function commandBatch(scenariosDir: string | undefined, mock: boolean): Pr
   for (const file of files) {
     console.log(`\n=== ${file} ===`);
     try {
-      reports.push(await runScenario({ scenarioPath: file, forceMock: mock, timestamp, verbose: true }));
+      reports.push(await runScenario({ scenarioPath: file, forceMock: mock, resetMemory, timestamp, verbose: true }));
     } catch (err) {
       console.error(`   ✖ scenario errored: ${(err as Error).message}`);
     }
@@ -106,17 +107,57 @@ function commandReport(runsDir: string | undefined): void {
   console.log(`\n${passed}/${runDirs.length} runs passed.`);
 }
 
+/**
+ * Delete ONLY the lesson-memory artifacts of one run (harness-created,
+ * per-run session memory — NOT durable learner memory, and NOT a DB):
+ *   turn-N/memory.working.json, turn-N/memory.archive.json,
+ *   lesson-memory.final.json, memory-reset.json
+ * Everything else (scenario, course snapshots, prompts/responses/scores,
+ * reports) is deliberately left untouched.
+ */
+function commandMemory(runDir: string | undefined, doDelete: boolean): void {
+  if (!runDir) fail('memory requires --run <run-dir>');
+  if (!doDelete) fail('memory currently supports only deletion — pass --delete to confirm.');
+  const dir = resolve(process.cwd(), runDir as string);
+  if (!existsSync(dir) || !statSync(dir).isDirectory()) fail(`Not a directory: ${dir}`);
+
+  const targets: string[] = [resolve(dir, 'lesson-memory.final.json'), resolve(dir, 'memory-reset.json')];
+  for (const entry of readdirSync(dir)) {
+    if (/^turn-\d+$/.test(entry) && statSync(resolve(dir, entry)).isDirectory()) {
+      targets.push(resolve(dir, entry, 'memory.working.json'));
+      targets.push(resolve(dir, entry, 'memory.archive.json'));
+    }
+  }
+
+  let deleted = 0;
+  for (const target of targets) {
+    if (existsSync(target)) {
+      rmSync(target);
+      console.log(`  🗑 deleted ${target}`);
+      deleted += 1;
+    }
+  }
+  console.log(
+    deleted === 0
+      ? `No memory artifacts found under ${dir} — nothing deleted.`
+      : `Deleted ${deleted} memory artifact(s) from ${dir}. Scenario, snapshots, prompts, scores and reports were left untouched.`,
+  );
+}
+
 async function main(): Promise<void> {
   const args = parseCliArgs(process.argv.slice(2));
   switch (args.command) {
     case 'run':
-      await commandRun(args.scenario, args.mock);
+      await commandRun(args.scenario, args.mock, args.resetMemory);
       break;
     case 'batch':
-      await commandBatch(args.scenariosDir, args.mock);
+      await commandBatch(args.scenariosDir, args.mock, args.resetMemory);
       break;
     case 'report':
       commandReport(args.runsDir);
+      break;
+    case 'memory':
+      commandMemory(args.runsDir, args.delete);
       break;
   }
 }
