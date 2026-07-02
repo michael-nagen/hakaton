@@ -21,8 +21,11 @@ import type { AiProviderConfig, AiProviderType, ModelProvider } from '../model-p
 import { createModelProviderFromConfig } from '../model-provider';
 import { createTutorProvider } from '../tutor-runtime';
 import type { TutorProvider } from '../tutor-runtime';
+import { resolveTutorStrategy } from '../lesson-runtime/tutor-strategy';
+import type { TutorRuntimeStrategy } from '../lesson-runtime/tutor-strategy';
 
 const STORAGE_KEY = 'maestro.aiProvider';
+const STRATEGY_STORAGE_KEY = 'maestro.tutorStrategy';
 
 const DISPLAY_NAMES: Record<AiProviderType, string> = {
   built_in: 'Built-in AI',
@@ -84,12 +87,32 @@ interface AiProviderContextValue {
   activeTutorProvider: TutorProvider | null;
   /** Set when the active config is incomplete/invalid (safe message, no secrets). */
   providerError: string | null;
+  /** How the lesson runtime wraps the model call (persisted; default single_tutor). */
+  tutorStrategy: TutorRuntimeStrategy;
+  setTutorStrategy: (strategy: TutorRuntimeStrategy) => void;
 }
 
 const AiProviderContext = createContext<AiProviderContextValue | null>(null);
 
 export function AiProviderProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<AiProviderConfig>(() => loadConfig());
+  const [tutorStrategy, setTutorStrategyState] = useState<TutorRuntimeStrategy>(() => {
+    try {
+      return resolveTutorStrategy(localStorage.getItem(STRATEGY_STORAGE_KEY));
+    } catch {
+      return resolveTutorStrategy(undefined);
+    }
+  });
+
+  const setTutorStrategy = useCallback((strategy: TutorRuntimeStrategy) => {
+    const next = resolveTutorStrategy(strategy);
+    setTutorStrategyState(next);
+    try {
+      localStorage.setItem(STRATEGY_STORAGE_KEY, next);
+    } catch {
+      // Non-fatal: strategy still lives in memory for this session.
+    }
+  }, []);
 
   const setAiProvider = useCallback((args: SetAiProviderArgs) => {
     const next: AiProviderConfig = {
@@ -140,6 +163,8 @@ export function AiProviderProvider({ children }: { children: ReactNode }) {
     activeModelProvider,
     activeTutorProvider,
     providerError,
+    tutorStrategy,
+    setTutorStrategy,
   };
 
   return <AiProviderContext.Provider value={value}>{children}</AiProviderContext.Provider>;

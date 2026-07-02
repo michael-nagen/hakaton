@@ -25,6 +25,7 @@ import {
   localInferenceRuntime,
 } from '../model-provider';
 import type { AiProviderType, LocalModelConfig, LocalModelInstallStatus, LocalModelState } from '../model-provider';
+import { TUTOR_STRATEGIES } from '../lesson-runtime/tutor-strategy';
 
 // Standalone AI setup screen. Goal: a near "one-click" connect flow per provider
 // so users never need to understand API infrastructure — click connect, land on
@@ -229,7 +230,8 @@ function providerStatus(params: {
 }
 
 export function AiSetupPage() {
-  const { config, setAiProvider, clearAiProvider, activeModelProvider, providerError } = useAiProvider();
+  const { config, setAiProvider, clearAiProvider, activeModelProvider, providerError, tutorStrategy, setTutorStrategy } =
+    useAiProvider();
   const activeType: AiProviderType = config.type;
 
   // ── Gemini ─────────────────────────────────────────────────────────
@@ -629,6 +631,60 @@ export function AiSetupPage() {
             </p>
           )}
         </section>
+
+        {/* ── Tutor strategy ── */}
+        {/* How the RUNTIME wraps each model call. The model never owns lesson
+            actions, memory, or retrieval — this only picks the wrapper. */}
+        <Card title="Tutor strategy" badge={{ text: 'How answers are made', tone: 'var(--fg-3)' }} active={false}>
+          <p style={disclosure}>
+            Choose how the tutor prepares each answer with the AI you selected above. You can change this anytime.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }} role="radiogroup" aria-label="Tutor strategy">
+            {TUTOR_STRATEGIES.map((s) => {
+              const selected = tutorStrategy === s.id;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => setTutorStrategy(s.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    textAlign: 'left',
+                    padding: '10px 12px',
+                    borderRadius: 10,
+                    cursor: 'pointer',
+                    background: 'transparent',
+                    color: 'var(--fg-1)',
+                    fontFamily: 'inherit',
+                    fontSize: 14,
+                    border: `1px solid ${selected ? 'var(--evergreen-500)' : 'var(--maestro-ink-3)'}`,
+                  }}
+                >
+                  <span
+                    aria-hidden
+                    style={{
+                      width: 14,
+                      height: 14,
+                      borderRadius: '50%',
+                      flexShrink: 0,
+                      border: `2px solid ${selected ? 'var(--evergreen-500)' : 'var(--fg-3)'}`,
+                      background: selected ? 'var(--evergreen-500)' : 'transparent',
+                    }}
+                  />
+                  <span style={{ flex: 1 }}>{s.label}</span>
+                  {s.experimental && <Badge text="Experimental" tone="var(--sunset-500, #FF8B62)" />}
+                </button>
+              );
+            })}
+          </div>
+          <p style={{ ...disclosure, margin: 0 }}>
+            {TUTOR_STRATEGIES.find((s) => s.id === tutorStrategy)?.description}
+          </p>
+        </Card>
 
         {/* ── Built-in ── */}
         <Card title="Use built-in AI" badge={{ text: 'Recommended', tone: 'var(--evergreen-500)' }} active={activeType === 'built_in'}>

@@ -4,3 +4,5 @@ export * from './lesson-actions';
 export * from './to-tutor-input';
 export * from './lesson-session';
 export * from './progress-store';
+export * from './tutor-strategy';
+export * from './tutor-guard';

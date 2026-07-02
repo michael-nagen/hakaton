@@ -23,6 +23,16 @@ export interface TutorInput {
     hints: string[];
     commonMistakes: string[];
     rubric?: string;
+    /**
+     * Course snippets retrieved BY THE RUNTIME (retrieval_first strategy).
+     * The model never searches on its own — it only receives these.
+     */
+    referenceSnippets?: string[];
+    /**
+     * Extra per-turn instructions injected by the runtime (repair/critic
+     * strategies), e.g. "rewrite the draft below without revealing the answer".
+     */
+    runtimeNotes?: string[];
   };
   studentState: {
     levelEstimate: 'beginner' | 'intermediate' | 'advanced';

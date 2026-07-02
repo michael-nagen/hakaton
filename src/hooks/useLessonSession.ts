@@ -70,7 +70,7 @@ export function useLessonSession(params: {
   unit: LearningUnit;
 }): UseLessonSession {
   const { course, unit } = params;
-  const { activeTutorProvider, providerError, config } = useAiProvider();
+  const { activeTutorProvider, providerError, config, tutorStrategy } = useAiProvider();
 
   const [state, setState] = useState<LessonSessionState>(() =>
     initLessonState({
@@ -119,6 +119,9 @@ export function useLessonSession(params: {
           state: stateRef.current,
           studentAnswer: answer,
           tutorProvider: activeTutorProvider,
+          // How the runtime wraps the call — selected in /ai-setup. The page
+          // stays provider- AND strategy-agnostic; it only sends messages.
+          strategy: tutorStrategy,
         });
         setState(result.state);
         saveProgress(result.state);
@@ -130,7 +133,7 @@ export function useLessonSession(params: {
         setLoading(false);
       }
     },
-    [activeTutorProvider, providerError, unit, loading],
+    [activeTutorProvider, providerError, unit, loading, tutorStrategy],
   );
 
   const resetLesson = useCallback(() => {

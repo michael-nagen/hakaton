@@ -41,6 +41,17 @@ export function buildTutorResponseSystemPrompt(input: TutorInput): string {
 
   if (lessonContext.rubric) sections.push(`Rubric for judging the answer:\n${lessonContext.rubric}`);
 
+  // Runtime-provided extras (both optional — absent for single_tutor, so that
+  // strategy's prompt is byte-identical to the pre-strategy behavior).
+  const snippets = renderList(
+    'Reference material (retrieved by the lesson runtime — ground your answer in it)',
+    lessonContext.referenceSnippets ?? [],
+  );
+  if (snippets) sections.push(snippets);
+
+  const notes = renderList('Runtime instructions for THIS reply (must follow)', lessonContext.runtimeNotes ?? []);
+  if (notes) sections.push(notes);
+
   sections.push(RESPONSE_SCHEMA_INSTRUCTION);
   return sections.join('\n\n');
 }
