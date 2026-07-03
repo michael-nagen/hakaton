@@ -38,13 +38,15 @@ Source of truth: [`src/config/locked-config.ts`](../src/config/locked-config.ts)
 Manual testing found a **stuck-learner loop**: when the learner said "tell me" / "i don't
 know" repeatedly, the tutor kept asking more leading questions instead of just explaining.
 
-Minimal targeted change (NOT a redesign) — added two rules to `structured_rules_prompt`
+Minimal targeted changes (NOT a redesign) — added to `structured_rules_prompt`
 (`src/runtime/tutor-prompt-variants.ts`):
-- **Rule 7:** if the learner says they don't know, asks you to just tell them, or misses the
-  same idea twice → STOP asking open-ended/leading questions; give a short direct
-  explanation + ONE concrete example from the reference material, then one very easy check
-  question.
-- **Rule 8:** don't repeat the same question/hint pattern more than twice; prefer a concrete
+- **Rule 4 (accept-if-close):** if the learner's answer is close enough / essentially right,
+  accept it, briefly tidy the wording, and continue — do not nitpick minor phrasing.
+- **Rule 8 (stuck-learner):** if the learner says they don't know, asks you to just tell them,
+  or misses the same idea twice → STOP asking open-ended/leading questions; give a short
+  direct explanation + ONE concrete example from the reference material, then one very easy
+  check question.
+- **Rule 9:** don't repeat the same question/hint pattern more than twice; prefer a concrete
   worked example over confusing "what if" hypotheticals.
 
 Verified by a small targeted smoke (structured_rules_prompt, real Llama, variables unit 1,
