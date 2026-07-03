@@ -12,6 +12,7 @@ import type {
 } from './tutor-runtime.types';
 import type { CommonMistake, KnowledgeBaseChunk } from '../course-package/course-package.types';
 import { freedomModeDirective } from './freedom-mode';
+import { SHARED_TUTOR_BEHAVIOR_RULES_LIST } from './shared-tutor-behavior-rules';
 
 function renderList(label: string, items: string[]): string {
   if (items.length === 0) return '';
@@ -79,6 +80,11 @@ function buildSystemPrompt(context: TutorContext): string {
 
   const constraints = renderList('Never', brain.constraints);
   if (constraints) sections.push(constraints);
+
+  // Locked teaching-behavior rules (shared with the harness structured_rules_prompt
+  // via ./shared-tutor-behavior-rules.ts): structured lesson opening, close-enough
+  // acceptance, stuck-learner repair, no-repeat.
+  sections.push(renderList('Teaching behavior (always follow)', [...SHARED_TUTOR_BEHAVIOR_RULES_LIST]));
 
   sections.push(freedomModeDirective(context.freedomMode));
 

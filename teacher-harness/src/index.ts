@@ -35,6 +35,10 @@ import { resolveTutorPromptVariant } from './runtime/tutor-prompt-variants';
 import { LOCKED_TUTOR_CONFIG } from './config/locked-config';
 import { DEFAULT_COURSE_FILE, DEFAULT_COURSE_ID } from '../../src/course-package/active-course';
 import { SHARED_LOCAL_TUTOR_DEFAULTS, SHARED_DEFAULTS_SOURCE } from '../../src/lesson-runtime/shared-local-tutor-defaults';
+import { SHARED_TUTOR_BEHAVIOR_RULES } from '../../src/tutor-runtime/shared-tutor-behavior-rules';
+import { buildTutorPrompt } from '../../src/tutor-runtime/build-tutor-prompt';
+import type { TutorContext } from '../../src/tutor-runtime/tutor-runtime.types';
+import { buildVariantPrompt } from './runtime/tutor-prompt-variants';
 // NOTE: we intentionally do NOT import the app's LOCAL_DEVICE_TUTOR_DEFAULTS here
 // — it pulls browser-only model-provider code through app barrels. The app is
 // provably wired to the SAME shared module (src/lesson-runtime/local-tutor-defaults.ts
@@ -463,6 +467,42 @@ function commandConfig(): void {
   out.push(`backupPromptVariant = ${c.backupPromptVariant}`);
   out.push(`activeCourseId = ${DEFAULT_COURSE_ID}`);
   out.push(`judge = eval-only (run \`npm run evaluate:judge\`; provider default ${c.judgeProvider})`);
+
+  // Render a tiny sample of BOTH prompts and confirm each carries the 4 shared
+  // behavior rules — proving the locked behavior is promoted into the app prompt
+  // builder AND still present in the harness structured_rules_prompt.
+  const stub: TutorContext = {
+    course: { id: 'sample', title: 'Sample' },
+    unit: { id: 'sample-unit', title: 'Sample Unit', goal: 'demonstrate the prompt' },
+    teacherBrain: { persona: 'tutor', tone: 'kind', objectives: [], guidelines: [], constraints: [] },
+    relevantChunks: [],
+    relatedQuestions: [],
+    commonMistakes: [],
+    progress: null,
+    freedomMode: 'guided',
+    userMessage: 'hi',
+  };
+  const appPrompt = buildTutorPrompt({ context: stub }).systemPrompt;
+  const harnessPrompt = buildVariantPrompt({ context: stub, variant: 'structured_rules_prompt' }).systemPrompt;
+  const ruleChecks: Array<[string, string]> = [
+    ['lessonOpening', SHARED_TUTOR_BEHAVIOR_RULES.lessonOpening],
+    ['closeEnough', SHARED_TUTOR_BEHAVIOR_RULES.closeEnough],
+    ['stuckLearner', SHARED_TUTOR_BEHAVIOR_RULES.stuckLearner],
+    ['noRepeat', SHARED_TUTOR_BEHAVIOR_RULES.noRepeat],
+  ];
+  out.push('');
+  out.push('appPromptRules:');
+  for (const [name, text] of ruleChecks) {
+    const present = appPrompt.includes(text);
+    if (!present) problems.push(`app prompt missing ${name} rule`);
+    out.push(`- ${name} = ${present ? 'present' : 'MISSING'}`);
+  }
+  out.push('harnessPromptRules:');
+  for (const [name, text] of ruleChecks) {
+    const present = harnessPrompt.includes(text);
+    if (!present) problems.push(`harness prompt missing ${name} rule`);
+    out.push(`- ${name} = ${present ? 'present' : 'MISSING'}`);
+  }
 
   console.log('\nTeacher Harness — config resolution (no Chrome / WebLLM / OpenAI / eval)\n');
   console.log(out.join('\n'));
