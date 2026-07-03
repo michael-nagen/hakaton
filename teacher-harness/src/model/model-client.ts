@@ -25,6 +25,8 @@ function createOpenAiCompatibleProvider(params: {
   model: string;
   apiKey: string;
   baseUrl: string;
+  /** When true, ask for strict JSON via response_format (OpenAI + compatible). */
+  jsonMode?: boolean;
 }): ModelProvider {
   const baseUrl = params.baseUrl.replace(/\/$/, '');
   return {
@@ -35,6 +37,9 @@ function createOpenAiCompatibleProvider(params: {
       if (args.system) messages.push({ role: 'system', content: args.system });
       messages.push({ role: 'user', content: args.prompt });
 
+      const body: Record<string, unknown> = { model: params.model, messages, max_tokens: MAX_TOKENS };
+      if (params.jsonMode) body.response_format = { type: 'json_object' };
+
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
       try {
@@ -44,7 +49,7 @@ function createOpenAiCompatibleProvider(params: {
             'content-type': 'application/json',
             authorization: `Bearer ${params.apiKey}`,
           },
-          body: JSON.stringify({ model: params.model, messages, max_tokens: MAX_TOKENS }),
+          body: JSON.stringify(body),
           signal: controller.signal,
         });
 
@@ -91,6 +96,7 @@ export function resolveProvider(config: ProviderConfig): ResolvedProvider {
     model: config.model as string,
     apiKey: config.apiKey as string,
     baseUrl: config.baseUrl as string,
+    jsonMode: config.jsonMode,
   });
   return { provider, mode: 'openai-compatible', modelName: config.model as string };
 }

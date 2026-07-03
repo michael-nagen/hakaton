@@ -18,6 +18,11 @@ export interface ProviderConfig {
   model?: string;
   apiKey?: string;
   baseUrl?: string;
+  /**
+   * Request strict JSON output (`response_format: {type:'json_object'}`).
+   * Used by the LLM judge so OpenAI / compatible endpoints return valid JSON.
+   */
+  jsonMode?: boolean;
 }
 
 /** A provider plus the label we record in reports. */

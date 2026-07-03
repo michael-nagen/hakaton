@@ -25,6 +25,8 @@ import { runMemoryEvaluation } from './evaluation/run-memory-eval';
 import { buildMemoryEvalReport, writeMemoryEvalReport } from './evaluation/memory-eval-report';
 import { runPromptEvaluation } from './evaluation/run-prompt-eval';
 import { buildPromptEvalReport, writePromptEvalReport } from './evaluation/prompt-eval-report';
+import { readLatestDeterministic, runLlmJudgeEvaluation } from './evaluation/run-llm-judge-eval';
+import { buildJudgeReport, readPriorJudgeReport, writeJudgeReport } from './evaluation/llm-judge-report';
 import { resolveLessonMemoryMode } from './runtime/lesson-memory.types';
 import { resolveTutorPromptVariant } from './runtime/tutor-prompt-variants';
 
@@ -303,6 +305,43 @@ async function commandEvaluatePrompts(): Promise<void> {
   console.log(`        ${jsonPath}`);
 }
 
+/**
+ * Second-pass LLM-judge comparison of the top-2 prompt variants
+ * (full_current_prompt vs structured_rules_prompt). Reuses the tutor outputs
+ * from the latest prompt-efficiency run (no local rerun) and layers a strong
+ * cloud judge on top. Writes reports/llm-judge-top2-evaluation-<ts>.{json,md}.
+ * Never fabricates: if the judge has no credentials, the report says exactly
+ * which env vars to set. Production Tutor prompt is NOT touched or promoted.
+ */
+async function commandEvaluateJudge(): Promise<void> {
+  const finishedAt = new Date().toISOString();
+  const output = await runLlmJudgeEvaluation({ timestamp: finishedAt, verbose: true });
+  // Cross-judge comparison against the newest prior judge run of a DIFFERENT model
+  // (e.g. OpenAI as decision-maker vs the earlier Gemini flash-lite sanity check).
+  const prior = readPriorJudgeReport(output.judgeModel ?? null);
+  const report = buildJudgeReport(output, readLatestDeterministic(), prior);
+  const { jsonPath, mdPath } = writeJudgeReport(report);
+
+  console.log(`\n${'='.repeat(60)}`);
+  if (!report.ran) {
+    console.log('LLM judge did NOT run.');
+    console.log(report.unavailableReason ?? 'Unknown reason.');
+    if (report.neededEnv?.length) console.log(`Set: ${report.neededEnv.join(', ')}`);
+  } else {
+    console.log(`Judge model:            ${report.judgeModel} (${report.judgeSource})`);
+    console.log(`Judge calls:            ${report.totals.judgedOk}/${report.totals.totalTurns} ok (${report.totals.repaired} repaired, ${report.totals.judgeFailed} failed)`);
+    console.log(`Deterministic winner:   ${report.deterministicWinner}`);
+    console.log(`LLM judge winner:       ${report.judgeWinner}`);
+    console.log(`Agreement (vs rules):   ${report.agree === null ? 'n/a' : report.agree ? 'AGREE' : 'DISAGREE'}`);
+    if (report.crossJudge) {
+      console.log(`Secondary judge:        ${report.crossJudge.priorModel} — winner ${report.crossJudge.judgesAgreeOnWinner === null ? 'n/a' : report.crossJudge.judgesAgreeOnWinner ? 'AGREE' : 'DISAGREE'}${report.crossJudge.priorLooksTooLenient ? ' (TOO LENIENT — discounted)' : ''}`);
+    }
+    console.log('Production tutor prompt NOT promoted (evaluation only).');
+  }
+  console.log(`Report: ${mdPath}`);
+  console.log(`        ${jsonPath}`);
+}
+
 async function main(): Promise<void> {
   const args = parseCliArgs(process.argv.slice(2));
   switch (args.command) {
@@ -329,6 +368,9 @@ async function main(): Promise<void> {
       break;
     case 'evaluate-prompts':
       await commandEvaluatePrompts();
+      break;
+    case 'evaluate-judge':
+      await commandEvaluateJudge();
       break;
   }
 }

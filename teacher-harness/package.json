@@ -14,6 +14,7 @@
     "evaluate:lesson-variants": "tsx src/index.ts evaluate-lesson-variants",
     "evaluate:memory": "tsx src/index.ts evaluate-memory",
     "evaluate:prompts": "tsx src/index.ts evaluate-prompts",
+    "evaluate:judge": "tsx src/index.ts evaluate-judge",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {

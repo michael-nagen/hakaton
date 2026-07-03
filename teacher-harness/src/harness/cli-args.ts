@@ -16,7 +16,8 @@ export type Command =
   | 'evaluate'
   | 'evaluate-lesson-variants'
   | 'evaluate-memory'
-  | 'evaluate-prompts';
+  | 'evaluate-prompts'
+  | 'evaluate-judge';
 
 export interface CliArgs {
   command: Command;
@@ -59,6 +60,7 @@ const COMMANDS: readonly Command[] = [
   'evaluate-lesson-variants',
   'evaluate-memory',
   'evaluate-prompts',
+  'evaluate-judge',
 ];
 
 function readFlag(argv: string[], flag: string): string | undefined {
@@ -83,7 +85,8 @@ export function parseCliArgs(argv: string[]): CliArgs {
         '           [--profiles all|<ids>] [--scenario <path>] [--scenarios <dir>]\n' +
         '  evaluate-lesson-variants   (fixed: Llama 3.2 3B WebLLM + repair_pass; varies CoursePackage variant)\n' +
         '  evaluate-memory            (fixed: Llama 3.2 3B WebLLM + repair_pass + high_very_guided; varies memory mode)\n' +
-        '  evaluate-prompts           (fixed baseline; varies tutor prompt variant across 16 learner profiles)',
+        '  evaluate-prompts           (fixed baseline; varies tutor prompt variant across 12 learner profiles)\n' +
+        '  evaluate-judge             (LLM-judge pass over the top-2 prompt variants; reuses prior tutor outputs)',
     );
   }
 

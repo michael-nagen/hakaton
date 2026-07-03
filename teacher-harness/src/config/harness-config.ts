@@ -58,6 +58,15 @@ function readValue(env: Record<string, string>, key: string): string | undefined
 }
 
 /**
+ * Read a single config value from process.env, then the HARNESS_ROOT/.env file.
+ * Public helper so other modules (e.g. the LLM judge) can read their own env
+ * keys with the same process-env-then-.env precedence, without printing values.
+ */
+export function readHarnessEnvValue(key: string): string | undefined {
+  return readValue(parseEnvFile(resolve(HARNESS_ROOT, '.env')), key);
+}
+
+/**
  * Resolve the provider configuration.
  *
  * Precedence for the mode (highest first):
