@@ -33,6 +33,13 @@ import { buildRealCourseReport, writeRealCourseReport } from './evaluation/real-
 import { LESSON_MEMORY_DEFAULTS, resolveLessonMemoryMode } from './runtime/lesson-memory.types';
 import { resolveTutorPromptVariant } from './runtime/tutor-prompt-variants';
 import { LOCKED_TUTOR_CONFIG } from './config/locked-config';
+import { DEFAULT_COURSE_FILE, DEFAULT_COURSE_ID } from '../../src/course-package/active-course';
+import { SHARED_LOCAL_TUTOR_DEFAULTS, SHARED_DEFAULTS_SOURCE } from '../../src/lesson-runtime/shared-local-tutor-defaults';
+// NOTE: we intentionally do NOT import the app's LOCAL_DEVICE_TUTOR_DEFAULTS here
+// — it pulls browser-only model-provider code through app barrels. The app is
+// provably wired to the SAME shared module (src/lesson-runtime/local-tutor-defaults.ts
+// assigns every shared field from SHARED_LOCAL_TUTOR_DEFAULTS; the app typecheck
+// enforces it), so we verify against the shared source directly.
 
 function fail(message: string): never {
   console.error(`\n✖ ${message}\n`);
@@ -354,10 +361,9 @@ async function commandEvaluateJudge(): Promise<void> {
  */
 async function commandEvaluateRealCourse(course: string | undefined, unitsCsv: string | undefined): Promise<void> {
   const outputDir = resolve(HARNESS_ROOT, '..', 'course-factory', 'output');
-  const DEFAULT_COURSE = 'course-python-variables-101.final.json';
   const coursePath = course
     ? (existsSync(course) ? course : resolve(outputDir, course))
-    : resolve(outputDir, DEFAULT_COURSE);
+    : resolve(outputDir, DEFAULT_COURSE_FILE);
 
   if (!existsSync(coursePath)) {
     fail(
@@ -409,32 +415,68 @@ async function commandEvaluateRealCourse(course: string | undefined, unitsCsv: s
  */
 function commandConfig(): void {
   const c = LOCKED_TUTOR_CONFIG;
-  // Cross-check the resolvers that connected paths actually use resolve to the lock.
-  const resolvedPromptDefault = resolveTutorPromptVariant(undefined);
-  const resolvedMemory = LESSON_MEMORY_DEFAULTS;
-  const lines = [
-    `promptVariant = ${c.promptVariant}`,
-    `baselinePromptVariant = ${c.baselinePromptVariant}`,
-    `backupPromptVariant = ${c.backupPromptVariant}`,
-    `lessonVariant = ${c.lessonVariant}`,
-    `model = ${c.modelName}`,
-    `strategy = ${c.strategy}`,
-    `memoryMode = ${c.memoryMode}`,
-    `lastMessagesLimit = ${c.lastMessagesLimit}`,
-    `lessonCompletion = ${c.lessonCompletion === 'disabled' ? 'false' : 'true'}`,
-    `judge = eval-only, not default runtime (run \`npm run evaluate:judge\`; provider default ${c.judgeProvider})`,
-  ];
-  console.log('\nTeacher Harness — resolved locked defaults (source: src/config/locked-config.ts)\n');
-  console.log(lines.join('\n'));
+  const shared = SHARED_LOCAL_TUTOR_DEFAULTS;
 
-  // Consistency guards: the connected resolvers must agree with the lock.
+  // The app's local-device runtime reads every shared field straight from the
+  // shared module (src/lesson-runtime/local-tutor-defaults.ts), so its resolved
+  // values ARE the shared values (enforced by the app typecheck).
+  const appVals = {
+    model: shared.model,
+    strategy: shared.strategy,
+    memoryMode: shared.memoryMode,
+    lastMessagesLimit: shared.lastMessagesLimit,
+    lessonVariant: shared.lessonVariant,
+    lessonCompletion: shared.lessonCompletion,
+  };
+  const harnessVals = {
+    model: c.modelName,
+    strategy: c.strategy,
+    memoryMode: c.memoryMode,
+    lastMessagesLimit: c.lastMessagesLimit,
+    lessonVariant: c.lessonVariant,
+    lessonCompletion: c.lessonCompletion,
+  };
+
+  const out: string[] = [`sharedDefaultsSource = ${SHARED_DEFAULTS_SOURCE}`, ''];
+  const fields: Array<[keyof typeof appVals, string]> = [
+    ['model', 'sameModelSource'],
+    ['strategy', 'sameStrategySource'],
+    ['memoryMode', 'sameMemorySource'],
+    ['lastMessagesLimit', 'sameMemoryLimitSource'],
+    ['lessonVariant', 'sameLessonVariantSource'],
+    ['lessonCompletion', 'sameCompletionSource'],
+  ];
   const problems: string[] = [];
+  for (const [key, sameLabel] of fields) {
+    const a = appVals[key];
+    const h = harnessVals[key];
+    const s = shared[key as keyof typeof shared];
+    const same = a === s && h === s; // both resolve from the SAME shared value
+    if (!same) problems.push(`${key}: app=${a} harness=${h} shared=${s}`);
+    out.push(`app.${key} = ${a}`);
+    out.push(`harness.${key} = ${h}`);
+    out.push(`${sameLabel} = ${same}`);
+    out.push('');
+  }
+  out.push(`promptVariant = ${c.promptVariant}`);
+  out.push(`baselinePromptVariant = ${c.baselinePromptVariant}`);
+  out.push(`backupPromptVariant = ${c.backupPromptVariant}`);
+  out.push(`activeCourseId = ${DEFAULT_COURSE_ID}`);
+  out.push(`judge = eval-only (run \`npm run evaluate:judge\`; provider default ${c.judgeProvider})`);
+
+  console.log('\nTeacher Harness — config resolution (no Chrome / WebLLM / OpenAI / eval)\n');
+  console.log(out.join('\n'));
+
+  // Extra guard: the plain-run prompt default resolver must equal the locked prompt.
+  const resolvedPromptDefault = resolveTutorPromptVariant(undefined);
   if (resolvedPromptDefault !== c.promptVariant) problems.push(`plain-run prompt default resolves to "${resolvedPromptDefault}", expected "${c.promptVariant}"`);
-  if (resolvedMemory.mode !== c.memoryMode) problems.push(`memory default mode "${resolvedMemory.mode}" != locked "${c.memoryMode}"`);
-  if (resolvedMemory.lastMessagesLimit !== c.lastMessagesLimit) problems.push(`memory limit ${resolvedMemory.lastMessagesLimit} != locked ${c.lastMessagesLimit}`);
+  // The harness memory resolver must also agree with the shared limit/mode.
+  if (LESSON_MEMORY_DEFAULTS.mode !== shared.memoryMode) problems.push(`harness memory default mode "${LESSON_MEMORY_DEFAULTS.mode}" != shared "${shared.memoryMode}"`);
+  if (LESSON_MEMORY_DEFAULTS.lastMessagesLimit !== shared.lastMessagesLimit) problems.push(`harness memory limit ${LESSON_MEMORY_DEFAULTS.lastMessagesLimit} != shared ${shared.lastMessagesLimit}`);
+
   console.log('');
   if (problems.length === 0) {
-    console.log('✅ connected resolvers agree with the locked defaults.');
+    console.log('✅ app runtime and teacher-harness resolve from the SAME shared source of truth.');
   } else {
     console.log('❌ config drift detected:');
     for (const p of problems) console.log(`   - ${p}`);
