@@ -33,6 +33,21 @@ Source of truth: [`src/config/locked-config.ts`](../src/config/locked-config.ts)
 - `compact_prompt` is a **backup**; a partial 5-unit top-3 run hinted it is competitive
   (~8.18 vs structured ~8.27) but that run was stopped early — unconfirmed.
 
+## Applied — lesson-opening intro (2026-07-03)
+
+The tutor sometimes started asking check questions before the learner understood the
+topic. Added a **lesson-opening** instruction to `structured_rules_prompt`: when a lesson
+is just starting, the tutor first gives a short structured intro — (1) what we'll learn
+(the unit goal in plain words), (2) ONE tiny concrete example from the reference material,
+(3) one line on why it matters / what the learner will be able to do — and only THEN begins
+the guided lesson and check questions (rule 6 now reads "after the intro…").
+
+Scope note: this lives in the harness/locked tutor prompt (`structured_rules_prompt`), the
+active tutor prompt of record and the slated product default. It does NOT touch the app's
+current production prompt (`src/tutor-runtime/build-tutor-prompt.ts`), which is unchanged —
+so the intro takes effect wherever `structured_rules_prompt` drives the tutor (harness, and
+the product once that prompt is promoted).
+
 ## Applied — stuck-learner rule (2026-07-03)
 
 Manual testing found a **stuck-learner loop**: when the learner said "tell me" / "i don't
