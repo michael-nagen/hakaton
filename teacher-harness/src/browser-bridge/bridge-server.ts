@@ -54,22 +54,31 @@ export interface WebllmBridge {
   close(): void;
 }
 
-function pageHtml(params: { webllmModelId: string; label: string }): string {
+function pageHtml(params: { webllmModelId: string; label: string; sessionId: string }): string {
   // Kept as one template string so the whole runner stays in this file. The
   // page is fully self-driving: load model → report ready → long-poll jobs.
+  //
+  // The page carries the run's SESSION ID (embedded below + also read from its
+  // own ?s= query) and tags every request with it. The server rejects requests
+  // whose session id does not match the current run, so a stale tab left over
+  // from a previous run can never attach to (or steal jobs from) a new run.
   return `<!doctype html>
 <html><head><meta charset="utf-8"><title>Teacher Harness — WebLLM bridge</title>
-<style>body{font-family:system-ui;margin:2rem;max-width:44rem}#log{white-space:pre-wrap;color:#333;font-size:.9rem}</style>
+<style>body{font-family:system-ui;margin:2rem;max-width:44rem}#log{white-space:pre-wrap;color:#333;font-size:.9rem}
+.sid{color:#888;font-size:.8rem}</style>
 </head><body>
 <h2>Teacher Harness — WebLLM bridge</h2>
 <p>Model: <b>${params.label}</b> (<code>${params.webllmModelId}</code>)</p>
+<p class="sid">session: <code>${params.sessionId}</code></p>
 <p>Leave this tab open. It loads the real on-device model and serves evaluation turns to the CLI.</p>
 <div id="log">starting…</div>
 <script type="module">
+const SESSION = new URLSearchParams(location.search).get('s') || '${params.sessionId}';
 const logEl = document.getElementById('log');
 const lines = [];
 function show(t){ lines.push(t); if (lines.length > 14) lines.shift(); logEl.textContent = lines.join('\\n'); }
-async function post(path, body){ try { await fetch(path, {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(body)}); } catch {} }
+function withSession(path){ return path + (path.includes('?') ? '&' : '?') + 's=' + encodeURIComponent(SESSION); }
+async function post(path, body){ try { await fetch(withSession(path), {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ ...body, session: SESSION })}); } catch {} }
 async function status(type, text){ show(text); await post('/status', {type, text}); }
 
 try {
@@ -77,9 +86,9 @@ try {
     await status('fatal', 'WebGPU is NOT available in this browser — the real model cannot run here.');
     throw new Error('no webgpu');
   }
-  await status('progress', 'importing @mlc-ai/web-llm…');
+  await status('loading', 'importing @mlc-ai/web-llm…');
   const webllm = await import('https://esm.run/@mlc-ai/web-llm');
-  await status('progress', 'loading ${params.webllmModelId} (cached weights are reused; first download is ~2 GB)…');
+  await status('loading', 'loading ${params.webllmModelId} (cached weights are reused; first download is ~2 GB)…');
   const engine = await webllm.CreateMLCEngine('${params.webllmModelId}', {
     initProgressCallback: (p) => { show(p.text); post('/status', {type:'progress', text: p.text}); },
   });
@@ -88,12 +97,14 @@ try {
   let done = 0;
   while (true) {
     let res;
-    try { res = await fetch('/job'); } catch { await new Promise(r=>setTimeout(r,1000)); continue; }
+    try { res = await fetch(withSession('/job')); } catch { await new Promise(r=>setTimeout(r,1000)); continue; }
     if (res.status === 204) continue;           // long-poll cycle, no job yet
-    if (res.status === 410) { show('bridge closed — done.'); break; }
+    if (res.status === 410) { show('bridge closed by CLI — done.'); break; }
+    if (res.status === 409) { show('stale session — a newer bridge run replaced this tab. Stopping; you can close this tab.'); break; }
     if (!res.ok) { await new Promise(r=>setTimeout(r,1000)); continue; }
     const job = await res.json();
     try {
+      await post('/status', { type:'generating', jobId: job.id });
       const out = await engine.chat.completions.create({
         messages: [
           ...(job.system ? [{ role: 'system', content: job.system }] : []),
@@ -137,15 +148,24 @@ export function startWebllmBridge(params: {
   webllmModelId: string;
   label: string;
   port: number;
+  /**
+   * Unique per-run id. Embedded in the page URL (?s=…) and required on every
+   * /job, /result and /status request; requests with any other id are rejected
+   * so a stale tab from a previous run can never attach to this run.
+   */
+  sessionId: string;
   onStatus?: (text: string) => void;
 }): WebllmBridge {
-  const { webllmModelId, label, port, onStatus } = params;
+  const { webllmModelId, label, port, sessionId, onStatus } = params;
 
   let nextJobId = 1;
   const queue: BridgeJob[] = [];
   const inFlight = new Map<number, BridgeJob>();
   let waitingPoll: ServerResponse | null = null;
   let closed = false;
+  // One-shot lifecycle flags so each milestone is logged exactly once.
+  let browserConnected = false;
+  let loadingLogged = false;
 
   let readyResolve: () => void;
   let readyReject: (err: Error) => void;
@@ -168,20 +188,34 @@ export function startWebllmBridge(params: {
   }
 
   const server: Server = createServer(async (req, res) => {
-    const url = req.url ?? '/';
-    if (req.method === 'GET' && (url === '/' || url.startsWith('/index'))) {
+    const rawUrl = req.url ?? '/';
+    const parsed = new URL(rawUrl, `http://localhost:${port}`);
+    const path = parsed.pathname;
+    const querySession = parsed.searchParams.get('s');
+
+    if (req.method === 'GET' && (path === '/' || path.startsWith('/index'))) {
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-      res.end(pageHtml({ webllmModelId, label }));
+      res.end(pageHtml({ webllmModelId, label, sessionId }));
       return;
     }
-    if (req.method === 'GET' && url === '/job') {
+    if (req.method === 'GET' && path === '/job') {
       if (closed) return sendJson(res, 410, { closed: true });
+      // Reject a stale tab (wrong/absent session id) so it stops polling and
+      // never steals a job meant for this run's tab.
+      if (querySession !== sessionId) {
+        onStatus?.(`✗ rejected /job from a stale tab (session "${querySession ?? 'none'}" ≠ "${sessionId}")`);
+        return sendJson(res, 409, { staleSession: true, expected: sessionId });
+      }
+      if (!browserConnected) {
+        browserConnected = true;
+        onStatus?.(`browser connected + polling /job (session ${sessionId})`);
+      }
       // A page only polls for jobs once its model is loaded, so a poll is an
       // implicit ready signal (covers a page that loaded while a previous
       // server process on this port was down and missed the 'ready' POST).
       if (!browserSeen) {
         browserSeen = true;
-        onStatus?.('browser attached (polling for jobs)');
+        onStatus?.('model ready — browser is serving jobs');
       }
       readyResolve();
       // Only one page should serve jobs; a newer poll replaces the older one.
@@ -201,14 +235,15 @@ export function startWebllmBridge(params: {
       dispatch();
       return;
     }
-    if (req.method === 'POST' && url === '/result') {
-      const body = JSON.parse((await readBody(req)) || '{}') as { id?: number; text?: string; error?: string };
+    if (req.method === 'POST' && path === '/result') {
+      const body = JSON.parse((await readBody(req)) || '{}') as { id?: number; text?: string; error?: string; session?: string };
+      if (body.session !== sessionId) return sendJson(res, 409, { staleSession: true });
       const job = body.id !== undefined ? inFlight.get(body.id) : undefined;
       if (job) {
         inFlight.delete(job.id);
         clearTimeout(job.timer);
         if (typeof body.text === 'string' && !body.error) {
-          onStatus?.(`✓ job #${job.id} completed (${body.text.length} chars)`);
+          onStatus?.(`✓ generation completed + result posted for job #${job.id} (${body.text.length} chars)`);
           job.resolve(body.text);
         } else {
           onStatus?.(`✗ job #${job.id} failed: ${body.error ?? 'empty reply'}`);
@@ -218,10 +253,31 @@ export function startWebllmBridge(params: {
       sendJson(res, 200, { ok: true });
       return;
     }
-    if (req.method === 'POST' && url === '/status') {
-      const body = JSON.parse((await readBody(req)) || '{}') as { type?: string; text?: string };
-      onStatus?.(`${body.type ?? 'status'}: ${body.text ?? ''}`);
-      if (body.type === 'ready') readyResolve();
+    if (req.method === 'POST' && path === '/status') {
+      const body = JSON.parse((await readBody(req)) || '{}') as {
+        type?: string;
+        text?: string;
+        session?: string;
+        jobId?: number;
+      };
+      if (body.session !== sessionId) return sendJson(res, 409, { staleSession: true });
+      if (!browserConnected) {
+        browserConnected = true;
+        onStatus?.(`browser connected (session ${sessionId})`);
+      }
+      if ((body.type === 'loading' || body.type === 'progress') && !loadingLogged) {
+        loadingLogged = true;
+        onStatus?.('model loading started (importing WebLLM + fetching/compiling weights)…');
+      }
+      if (body.type === 'generating') {
+        onStatus?.(`generation started for job #${body.jobId ?? '?'}`);
+      } else {
+        onStatus?.(`${body.type ?? 'status'}: ${body.text ?? ''}`);
+      }
+      if (body.type === 'ready') {
+        onStatus?.('model ready (browser reported load complete)');
+        readyResolve();
+      }
       if (body.type === 'fatal') readyReject(new Error(body.text ?? 'browser reported a fatal error'));
       sendJson(res, 200, { ok: true });
       return;
@@ -232,13 +288,15 @@ export function startWebllmBridge(params: {
   // The server DOES hold the event loop open while the evaluation runs (the
   // whole run depends on it); commandEvaluate shuts it down via close() when
   // the matrix is done, which is what lets the process exit.
-  server.listen(port);
+  server.listen(port, () => {
+    onStatus?.(`bridge server started on port ${port} (session ${sessionId}) — waiting for a WebGPU browser to attach`);
+  });
   server.on('error', (err) => {
     onStatus?.(`fatal: bridge server failed on port ${port}: ${err.message} (is something else using this port?)`);
     readyReject(new Error(`bridge server failed on port ${port}: ${err.message}`));
   });
 
-  const url = `http://localhost:${port}/`;
+  const url = `http://localhost:${port}/?s=${encodeURIComponent(sessionId)}`;
 
   async function awaitReady(): Promise<void> {
     const timeout = new Promise<never>((_, reject) => {
@@ -294,7 +352,9 @@ export function startWebllmBridge(params: {
     provider,
     url,
     close() {
+      if (closed) return;
       closed = true;
+      onStatus?.(`bridge closed by CLI (session ${sessionId})`);
       if (waitingPoll) sendJson(waitingPoll, 410, { closed: true });
       server.close();
       server.closeAllConnections();

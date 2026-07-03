@@ -12,6 +12,7 @@
 
 import { existsSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { HARNESS_ROOT } from './config/harness-config';
 import { parseCliArgs, type CliArgs } from './harness/cli-args';
 import { runScenario } from './harness/run-scenario';
 import { writeBatchReport } from './reporting/report-writer';
@@ -27,6 +28,8 @@ import { runPromptEvaluation } from './evaluation/run-prompt-eval';
 import { buildPromptEvalReport, writePromptEvalReport } from './evaluation/prompt-eval-report';
 import { readLatestDeterministic, runLlmJudgeEvaluation } from './evaluation/run-llm-judge-eval';
 import { buildJudgeReport, readPriorJudgeReport, writeJudgeReport } from './evaluation/llm-judge-report';
+import { runRealCourseEvaluation } from './evaluation/run-real-course-eval';
+import { buildRealCourseReport, writeRealCourseReport } from './evaluation/real-course-report';
 import { resolveLessonMemoryMode } from './runtime/lesson-memory.types';
 import { resolveTutorPromptVariant } from './runtime/tutor-prompt-variants';
 
@@ -342,6 +345,62 @@ async function commandEvaluateJudge(): Promise<void> {
   console.log(`        ${jsonPath}`);
 }
 
+/**
+ * Real-course validation of the top-2 prompt variants: real local Llama WebLLM
+ * tutor + OpenAI judge on a REAL (non-placeholder) CourseFactory course. Fixed
+ * runtime (repair_pass / last_messages_only(8) / completion disabled). Writes
+ * reports/real-course-top2-validation-<ts>.{json,md}. Production prompt untouched.
+ */
+async function commandEvaluateRealCourse(course: string | undefined, unitsCsv: string | undefined): Promise<void> {
+  const outputDir = resolve(HARNESS_ROOT, '..', 'course-factory', 'output');
+  const DEFAULT_COURSE = 'course-python-variables-101.final.json';
+  const coursePath = course
+    ? (existsSync(course) ? course : resolve(outputDir, course))
+    : resolve(outputDir, DEFAULT_COURSE);
+
+  if (!existsSync(coursePath)) {
+    fail(
+      `Real course not found: ${coursePath}. Available under course-factory/output/: ` +
+        `${existsSync(outputDir) ? readdirSync(outputDir).filter((f) => f.endsWith('.final.json')).join(', ') || '(none)' : '(dir missing)'}.`,
+    );
+    return;
+  }
+
+  const pkg = JSON.parse(readFileSync(coursePath, 'utf8')) as { courseId?: string; id?: string; title?: string; units?: Array<{ id: string }> };
+  const courseId = pkg.courseId ?? pkg.id ?? 'unknown-course';
+  const allUnitIds = (pkg.units ?? []).map((u) => u.id);
+  if (allUnitIds.length === 0) fail(`Course ${courseId} has no units.`);
+  // Guard against silently validating the placeholder mock-demo course.
+  if (/mock[-_]?demo|placeholder/i.test(courseId)) {
+    fail(`Refusing to run REAL-course validation on the placeholder course "${courseId}". Pass a real course via --course.`);
+    return;
+  }
+  const unitIds = unitsCsv
+    ? unitsCsv.split(',').map((s) => s.trim()).filter(Boolean)
+    : allUnitIds.slice(0, 2); // default: first two units (second unit if available)
+
+  console.log(`\n🎓 Real-course validation — ${courseId} — units: ${unitIds.join(', ')}`);
+  const finishedAt = new Date().toISOString();
+  const output = await runRealCourseEvaluation({ timestamp: finishedAt, coursePath, courseId, unitIds, verbose: true });
+  const report = buildRealCourseReport(output);
+  const { jsonPath, mdPath } = writeRealCourseReport(report);
+
+  console.log(`\n${'='.repeat(60)}`);
+  if (!report.judge.ran) {
+    console.log(`Validation did NOT complete: ${output.incompleteReason ?? report.judge.unavailableReason ?? 'unknown'}`);
+  } else {
+    const full = report.judge.variants.find((v) => v.variant === 'full_current_prompt');
+    const structured = report.judge.variants.find((v) => v.variant === 'structured_rules_prompt');
+    console.log(`Course:                 ${courseId} (units ${unitIds.join(', ')})`);
+    console.log(`Judge:                  ${report.judgeModel} — ${report.totals.judgedOk}/${report.totals.totalTurns} ok (${report.totals.judgeFailed} failed)`);
+    console.log(`Deterministic winner:   ${report.judge.deterministicWinner}`);
+    console.log(`OpenAI judge winner:    ${report.judge.judgeWinner} (full ${full?.overallAvg}/10 vs structured ${structured?.overallAvg}/10)`);
+    console.log('Production tutor prompt NOT promoted (validation only).');
+  }
+  console.log(`Report: ${mdPath}`);
+  console.log(`        ${jsonPath}`);
+}
+
 async function main(): Promise<void> {
   const args = parseCliArgs(process.argv.slice(2));
   switch (args.command) {
@@ -371,6 +430,9 @@ async function main(): Promise<void> {
       break;
     case 'evaluate-judge':
       await commandEvaluateJudge();
+      break;
+    case 'evaluate-real-course':
+      await commandEvaluateRealCourse(args.course, args.units);
       break;
   }
 }

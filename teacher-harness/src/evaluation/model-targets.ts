@@ -181,10 +181,15 @@ export function createProviderForTarget(target: EvalModelTarget): ModelProvider 
     if (!catalogEntry?.webllmModelId) {
       throw new Error(`No WebLLM model id configured for "${target.id}" in the app catalog.`);
     }
+    // Unique per-run session id so a stale tab from an earlier run (same port,
+    // cached weights reused) cannot attach to this run. Env override lets a
+    // reopened tab rejoin an in-progress run if ever needed.
+    const sessionId = process.env.TEACHER_HARNESS_BRIDGE_SESSION || `${process.pid}-${Date.now().toString(36)}`;
     const bridge = startWebllmBridge({
       webllmModelId: catalogEntry.webllmModelId,
       label: catalogEntry.displayName,
       port: bridgePort(),
+      sessionId,
       onStatus: (text) => console.log(`  [bridge] ${text}`),
     });
     openBridges.push(bridge);

@@ -10,7 +10,24 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { HARNESS_ROOT } from '../config/harness-config';
-import { JUDGE_SCORE_DIMENSIONS, JUDGED_PROMPT_VARIANTS, type JudgedPromptVariant, type JudgedTurn, type LlmJudgeScores } from './llm-judge.types';
+import { JUDGE_SCORE_DIMENSIONS, JUDGED_PROMPT_VARIANTS, REALISTIC_TOP3_VARIANTS, type JudgedPromptVariant, type JudgedTurn, type LlmJudgeScores } from './llm-judge.types';
+
+/** The variants actually judged in this run, in canonical order (full → structured → compact). */
+function orderedVariants(results: JudgedTurn[]): JudgedPromptVariant[] {
+  const present = new Set(results.map((r) => r.input.promptVariant));
+  const ordered = REALISTIC_TOP3_VARIANTS.filter((v) => present.has(v));
+  // Include any present variant not in the canonical list (defensive).
+  for (const v of present) if (!ordered.includes(v)) ordered.push(v);
+  return ordered;
+}
+
+/** Pick the winning variant by judge overall, or 'tie' if the top two are equal. */
+function pickWinner(variants: VariantAgg[]): JudgedPromptVariant | 'tie' | null {
+  if (variants.length === 0) return null;
+  const sorted = [...variants].sort((a, b) => b.overallAvg - a.overallAvg);
+  if (sorted.length >= 2 && sorted[0].overallAvg === sorted[1].overallAvg) return 'tie';
+  return sorted[0].variant;
+}
 import type { JudgeEvalOutput } from './run-llm-judge-eval';
 
 const DIM_LABELS: Record<keyof LlmJudgeScores, string> = {
@@ -80,26 +97,28 @@ function aggregateVariant(variant: JudgedPromptVariant, results: JudgedTurn[]): 
 interface ProfileComparison {
   profileId: string;
   category: string;
-  overall: Record<JudgedPromptVariant, number | null>;
+  overall: Partial<Record<JudgedPromptVariant, number | null>>;
   betterVariant: JudgedPromptVariant | 'tie' | 'n/a';
 }
 
 function perProfile(results: JudgedTurn[]): ProfileComparison[] {
+  const variantList = orderedVariants(results);
   const ids = [...new Set(results.map((r) => r.input.profileId))];
   return ids.map((profileId) => {
     const category = results.find((r) => r.input.profileId === profileId)?.input.category ?? 'unknown';
-    const overall = {} as Record<JudgedPromptVariant, number | null>;
-    for (const v of JUDGED_PROMPT_VARIANTS) {
+    const overall: Partial<Record<JudgedPromptVariant, number | null>> = {};
+    for (const v of variantList) {
       const ok = results.filter(
         (r): r is Extract<JudgedTurn, { ok: true }> => r.ok && r.input.profileId === profileId && r.input.promptVariant === v,
       );
       overall[v] = ok.length ? round(ok.reduce((a, r) => a + r.score.overallScore, 0) / ok.length) : null;
     }
-    const [a, b] = JUDGED_PROMPT_VARIANTS;
+    // Best variant = highest profile overall among those with a score (tie if top two equal).
+    const scored = variantList.map((v) => ({ v, s: overall[v] })).filter((x): x is { v: JudgedPromptVariant; s: number } => typeof x.s === 'number');
+    scored.sort((a, b) => b.s - a.s);
     let betterVariant: ProfileComparison['betterVariant'] = 'n/a';
-    if (overall[a] !== null && overall[b] !== null) {
-      betterVariant = overall[a]! > overall[b]! ? a : overall[b]! > overall[a]! ? b : 'tie';
-    }
+    if (scored.length >= 2) betterVariant = scored[0].s === scored[1].s ? 'tie' : scored[0].v;
+    else if (scored.length === 1) betterVariant = scored[0].v;
     return { profileId, category, overall, betterVariant };
   });
 }
@@ -263,25 +282,19 @@ export function buildJudgeReport(
   prior?: PriorJudgeSummary | null,
 ): JudgeReport {
   const ran = output.judgeAvailable && output.judgedOk > 0;
-  const variants = ran ? JUDGED_PROMPT_VARIANTS.map((v) => aggregateVariant(v, output.results)) : [];
+  const variantList = ran ? orderedVariants(output.results) : [];
+  const variants = variantList.map((v) => aggregateVariant(v, output.results));
   const perTurn = ran ? collectPerTurn(output.results) : [];
 
-  const judgeWinner = ran
-    ? (() => {
-        const [a, b] = variants;
-        if (!a || !b) return null;
-        return a.overallAvg > b.overallAvg ? a.variant : b.overallAvg > a.overallAvg ? b.variant : 'tie';
-      })()
-    : null;
+  const judgeWinner = ran ? pickWinner(variants) : null;
 
-  const deterministicWinner = deterministic
-    ? (() => {
-        const [a, b] = JUDGED_PROMPT_VARIANTS;
-        const sa = Number(deterministic[a]?.score ?? 0);
-        const sb = Number(deterministic[b]?.score ?? 0);
-        return sa >= sb ? a : b;
-      })()
-    : null;
+  // Deterministic winner = highest deterministic score among the judged variants.
+  const deterministicWinner =
+    deterministic && variantList.length
+      ? variantList.reduce((best, v) =>
+          Number(deterministic[v]?.score ?? -1) > Number(deterministic[best]?.score ?? -1) ? v : best,
+        variantList[0])
+      : null;
 
   const agree = judgeWinner && judgeWinner !== 'tie' && deterministicWinner ? judgeWinner === deterministicWinner : null;
 
@@ -364,13 +377,13 @@ function buildRecommendation(params: {
     else if (crossJudge.judgesAgreeOnWinner === false) rec.push(`Judges DISAGREE on the winner (${crossJudge.priorModel}: ${crossJudge.priorWinner}, this judge: ${judgeWinner}) — trust this judge.`);
   }
 
-  rec.push(`structured_rules_prompt good enough for product use: ${structuredProductOk ? 'YES (on this placeholder course)' : 'NOT YET — see product-suitability score'}.`);
-  rec.push('full_current_prompt remains the QUALITY BASELINE to beat until a compact prompt matches it on a real course.');
+  rec.push(`structured_rules_prompt good enough for product use: ${structuredProductOk ? 'YES on the evaluated course' : 'NOT YET — see product-suitability score'}.`);
+  rec.push('full_current_prompt remains the QUALITY BASELINE to beat.');
   if (deterministic) {
     const room = deterministic.structured_rules_prompt?.personalizationRoomChars;
     if (room) rec.push(`If promoted, structured_rules_prompt frees ~${room} instruction chars for a small personalization block — add incrementally and re-judge for regressions.`);
   }
-  rec.push('Do NOT promote either prompt automatically — this is evaluation only. Next: re-run on a real CourseFactory course + a second unit, then a small human spot-check.');
+  rec.push('Do NOT promote either prompt automatically — this is evaluation only. Next: run another unit/course, then a small human spot-check.');
   return rec;
 }
 

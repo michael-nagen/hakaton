@@ -17,7 +17,8 @@ export type Command =
   | 'evaluate-lesson-variants'
   | 'evaluate-memory'
   | 'evaluate-prompts'
-  | 'evaluate-judge';
+  | 'evaluate-judge'
+  | 'evaluate-real-course';
 
 export interface CliArgs {
   command: Command;
@@ -39,6 +40,10 @@ export interface CliArgs {
   memoryMode?: string;
   /** run: tutor prompt variant rendered into the prompt (default full_current_prompt). */
   promptVariant?: string;
+  /** evaluate-real-course: path to a real CoursePackage .final.json (relative to course-factory/output/ or absolute). */
+  course?: string;
+  /** evaluate-real-course: comma-separated unit ids to test (default: first two units). */
+  units?: string;
   /** Force the offline mock provider regardless of env/scenario. */
   mock: boolean;
   /**
@@ -61,6 +66,7 @@ const COMMANDS: readonly Command[] = [
   'evaluate-memory',
   'evaluate-prompts',
   'evaluate-judge',
+  'evaluate-real-course',
 ];
 
 function readFlag(argv: string[], flag: string): string | undefined {
@@ -86,7 +92,8 @@ export function parseCliArgs(argv: string[]): CliArgs {
         '  evaluate-lesson-variants   (fixed: Llama 3.2 3B WebLLM + repair_pass; varies CoursePackage variant)\n' +
         '  evaluate-memory            (fixed: Llama 3.2 3B WebLLM + repair_pass + high_very_guided; varies memory mode)\n' +
         '  evaluate-prompts           (fixed baseline; varies tutor prompt variant across 12 learner profiles)\n' +
-        '  evaluate-judge             (LLM-judge pass over the top-2 prompt variants; reuses prior tutor outputs)',
+        '  evaluate-judge             (LLM-judge pass over the top-2 prompt variants; reuses prior tutor outputs)\n' +
+        '  evaluate-real-course [--course <path>] [--units <id,id>]  (top-2 validation on a REAL course; real Llama tutor + OpenAI judge)',
     );
   }
 
@@ -101,6 +108,8 @@ export function parseCliArgs(argv: string[]): CliArgs {
     reportPrefix: readFlag(rest, '--report-prefix'),
     memoryMode: readFlag(rest, '--memory-mode'),
     promptVariant: readFlag(rest, '--prompt-variant'),
+    course: readFlag(rest, '--course'),
+    units: readFlag(rest, '--units'),
     mock: rest.includes('--mock'),
     resetMemory: rest.includes('--reset-memory'),
     delete: rest.includes('--delete'),

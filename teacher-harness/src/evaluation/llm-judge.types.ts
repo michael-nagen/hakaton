@@ -9,12 +9,25 @@
 // The judge NEVER uses the local Llama tutor model (that would grade its own
 // work). Output is strict JSON, validated against LlmJudgeTurnScore.
 
-/** The two prompt variants under comparison (top-2 from the deterministic run). */
-export type JudgedPromptVariant = 'full_current_prompt' | 'structured_rules_prompt';
+/** Prompt variants the judge can compare (the realistic, non-degenerate set). */
+export type JudgedPromptVariant = 'full_current_prompt' | 'structured_rules_prompt' | 'compact_prompt';
 
+/**
+ * Default judged set = the TOP-2 (used by `evaluate-judge`, which discovers
+ * saved artifacts for exactly these two). The real-course validation uses
+ * REALISTIC_TOP3_VARIANTS instead. Reports derive their variant list from the
+ * turns actually judged, so both work without further coupling.
+ */
 export const JUDGED_PROMPT_VARIANTS: readonly JudgedPromptVariant[] = [
   'full_current_prompt',
   'structured_rules_prompt',
+];
+
+/** Top-3 realistic variants for the final validation (adds the compact backup). */
+export const REALISTIC_TOP3_VARIANTS: readonly JudgedPromptVariant[] = [
+  'full_current_prompt',
+  'structured_rules_prompt',
+  'compact_prompt',
 ];
 
 /** The eight 1–5 rubric dimensions. */
