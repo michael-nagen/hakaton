@@ -8,16 +8,36 @@
 //
 // Kept minimal on purpose; if the surface grows, swap in a real arg library.
 
-export type Command = 'run' | 'batch' | 'report' | 'memory';
+export type Command =
+  | 'run'
+  | 'batch'
+  | 'report'
+  | 'memory'
+  | 'evaluate'
+  | 'evaluate-lesson-variants'
+  | 'evaluate-memory'
+  | 'evaluate-prompts';
 
 export interface CliArgs {
   command: Command;
-  /** Path to a single scenario file (run). */
+  /** Path to a single scenario file (run, evaluate). */
   scenario?: string;
-  /** Directory of scenario files (batch). */
+  /** Directory of scenario files (batch, evaluate). */
   scenariosDir?: string;
   /** Directory of run artifacts (report) or a single run dir (memory). */
   runsDir?: string;
+  /** evaluate: model targets — "all" | "mock" | "proxies" | comma-list of ids. */
+  models?: string;
+  /** evaluate: strategies — "all" | comma-list of strategy ids. */
+  strategies?: string;
+  /** evaluate: built-in learner profiles — "all" | comma-list of profile ids. */
+  profiles?: string;
+  /** evaluate: report filename prefix (default "model-strategy-evaluation"). */
+  reportPrefix?: string;
+  /** run: lesson-memory mode rendered into the prompt (default structured_working_memory). */
+  memoryMode?: string;
+  /** run: tutor prompt variant rendered into the prompt (default full_current_prompt). */
+  promptVariant?: string;
   /** Force the offline mock provider regardless of env/scenario. */
   mock: boolean;
   /**
@@ -30,7 +50,16 @@ export interface CliArgs {
   delete: boolean;
 }
 
-const COMMANDS: readonly Command[] = ['run', 'batch', 'report', 'memory'];
+const COMMANDS: readonly Command[] = [
+  'run',
+  'batch',
+  'report',
+  'memory',
+  'evaluate',
+  'evaluate-lesson-variants',
+  'evaluate-memory',
+  'evaluate-prompts',
+];
 
 function readFlag(argv: string[], flag: string): string | undefined {
   const i = argv.indexOf(flag);
@@ -46,10 +75,15 @@ export function parseCliArgs(argv: string[]): CliArgs {
   if (!command) {
     throw new Error(
       `Unknown or missing command "${rawCommand ?? ''}". Usage:\n` +
-        '  run    --scenario <path> [--mock] [--reset-memory]\n' +
-        '  batch  --scenarios <dir> [--mock] [--reset-memory]\n' +
-        '  report --run <runs-dir>\n' +
-        '  memory --delete --run <run-dir>',
+        '  run      --scenario <path> [--mock] [--reset-memory] [--memory-mode <mode>] [--prompt-variant <v>]\n' +
+        '  batch    --scenarios <dir> [--mock] [--reset-memory] [--memory-mode <mode>] [--prompt-variant <v>]\n' +
+        '  report   --run <runs-dir>\n' +
+        '  memory   --delete --run <run-dir>\n' +
+        '  evaluate [--models all|mock|proxies|<ids>] [--strategies all|<ids>]\n' +
+        '           [--profiles all|<ids>] [--scenario <path>] [--scenarios <dir>]\n' +
+        '  evaluate-lesson-variants   (fixed: Llama 3.2 3B WebLLM + repair_pass; varies CoursePackage variant)\n' +
+        '  evaluate-memory            (fixed: Llama 3.2 3B WebLLM + repair_pass + high_very_guided; varies memory mode)\n' +
+        '  evaluate-prompts           (fixed baseline; varies tutor prompt variant across 16 learner profiles)',
     );
   }
 
@@ -58,6 +92,12 @@ export function parseCliArgs(argv: string[]): CliArgs {
     scenario: readFlag(rest, '--scenario'),
     scenariosDir: readFlag(rest, '--scenarios'),
     runsDir: readFlag(rest, '--run'),
+    models: readFlag(rest, '--models'),
+    strategies: readFlag(rest, '--strategies'),
+    profiles: readFlag(rest, '--profiles'),
+    reportPrefix: readFlag(rest, '--report-prefix'),
+    memoryMode: readFlag(rest, '--memory-mode'),
+    promptVariant: readFlag(rest, '--prompt-variant'),
     mock: rest.includes('--mock'),
     resetMemory: rest.includes('--reset-memory'),
     delete: rest.includes('--delete'),

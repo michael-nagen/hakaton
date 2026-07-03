@@ -16,6 +16,7 @@ import {
   type LearnerStatus,
   type LessonMemoryConfig,
   type LessonMemoryMessage,
+  type LessonMemoryMode,
   type LessonProgressChecklistItem,
   type LessonSessionMemory,
   type LessonWorkingMemory,
@@ -150,6 +151,97 @@ export function renderWorkingMemoryForPrompt(working: LessonWorkingMemory): stri
   lines.push('Recent conversation (most recent last):');
   lines.push(renderMessages(working.lastMessages));
   return lines.join('\n');
+}
+
+// ── Per-mode renderers ───────────────────────────────────────────────
+//
+// Each renderer takes the SAME computed working memory and chooses which slice
+// to expose. None of them ever renders the full archive. The shared preamble
+// keeps the "this block is authoritative, do not invent history" framing that
+// the structured mode already used, so switching modes changes the CONTENT of
+// the memory block, not the surrounding tutor instructions.
+
+const MEMORY_PREAMBLE = [
+  '- Treat this block as the authoritative record of the lesson so far.',
+  '- Do NOT rely on any hidden or remembered context beyond this block and the current message.',
+  '- Do NOT invent history, progress, or prior answers that are not recorded here.',
+];
+
+/** Mode: last_messages_only — just the last N verbatim messages. */
+function renderLastMessagesOnly(working: LessonWorkingMemory, limit: number): string {
+  const lines: string[] = [];
+  lines.push('LESSON MEMORY — RECENT MESSAGES ONLY (authoritative; the ONLY lesson memory you have):');
+  lines.push(...MEMORY_PREAMBLE);
+  lines.push('');
+  lines.push('Recent conversation (most recent last):');
+  lines.push(renderMessages(working.lastMessages.slice(-limit)));
+  return lines.join('\n');
+}
+
+/**
+ * Build the compact deterministic summary shared by summary_only and
+ * summary_plus_last_messages: what has been explained, mistakes corrected,
+ * hints/questions used, what the learner still needs, and status. No raw
+ * messages, no checklist rows, no archive.
+ */
+function renderCompactSummaryBody(working: LessonWorkingMemory): string[] {
+  const lines: string[] = [];
+  lines.push(`Already explained / learner appears to know: ${working.learnerKnows.join('; ') || '(nothing proven yet)'}`);
+  lines.push(`Mistakes already corrected: ${working.correctedMistakes.join('; ') || '(none)'}`);
+  lines.push(`Hints already used (do not repeat verbatim): ${working.hintsGiven.join('; ') || '(none)'}`);
+  lines.push(`Questions already attempted: ${working.questionsAttempted.join('; ') || '(none)'}`);
+  lines.push(`Learner still seems to need: ${working.learnerStillNeeds.join('; ') || '(none)'}`);
+  lines.push(`Learner status: ${working.learnerStatus}`);
+  if (working.olderHistorySummary) lines.push(`Earlier history: ${working.olderHistorySummary}`);
+  return lines;
+}
+
+/** Mode: summary_only — compact summary, no raw messages or checklist. */
+function renderSummaryOnly(working: LessonWorkingMemory): string {
+  const lines: string[] = [];
+  lines.push('LESSON MEMORY — COMPACT SUMMARY ONLY (authoritative; the ONLY lesson memory you have):');
+  lines.push(...MEMORY_PREAMBLE);
+  lines.push('');
+  lines.push(...renderCompactSummaryBody(working));
+  return lines.join('\n');
+}
+
+/** Mode: summary_plus_last_messages — compact summary + last N messages. */
+function renderSummaryPlusLastMessages(working: LessonWorkingMemory, limit: number): string {
+  const lines: string[] = [];
+  lines.push('LESSON MEMORY — SUMMARY + RECENT MESSAGES (authoritative; the ONLY lesson memory you have):');
+  lines.push(...MEMORY_PREAMBLE);
+  lines.push('');
+  lines.push(...renderCompactSummaryBody(working));
+  lines.push('');
+  lines.push('Recent conversation (most recent last):');
+  lines.push(renderMessages(working.lastMessages.slice(-limit)));
+  return lines.join('\n');
+}
+
+/**
+ * THE single place that decides what memory text reaches the model. Returns an
+ * empty string for `no_memory` (nothing is appended to the prompt). The full
+ * conversation archive is never rendered by any branch.
+ */
+export function renderMemoryForPrompt(params: {
+  working: LessonWorkingMemory;
+  mode: LessonMemoryMode;
+  config?: Partial<LessonMemoryConfig>;
+}): string {
+  const cfg: LessonMemoryConfig = { ...LESSON_MEMORY_DEFAULTS, ...params.config };
+  switch (params.mode) {
+    case 'no_memory':
+      return '';
+    case 'last_messages_only':
+      return renderLastMessagesOnly(params.working, cfg.lastMessagesLimit);
+    case 'summary_only':
+      return renderSummaryOnly(params.working);
+    case 'summary_plus_last_messages':
+      return renderSummaryPlusLastMessages(params.working, cfg.lastMessagesLimit);
+    case 'structured_working_memory':
+      return renderWorkingMemoryForPrompt(params.working);
+  }
 }
 
 // ── Deterministic update ─────────────────────────────────────────────

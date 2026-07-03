@@ -9,6 +9,11 @@
     "batch": "tsx src/index.ts batch",
     "report": "tsx src/index.ts report",
     "memory": "tsx src/index.ts memory",
+    "evaluate": "tsx src/index.ts evaluate",
+    "evaluate:llama": "tsx src/index.ts evaluate --scenarios scenarios --models llama_3_2_3b --strategies all --report-prefix llama-3-2-3b-strategy-evaluation",
+    "evaluate:lesson-variants": "tsx src/index.ts evaluate-lesson-variants",
+    "evaluate:memory": "tsx src/index.ts evaluate-memory",
+    "evaluate:prompts": "tsx src/index.ts evaluate-prompts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {

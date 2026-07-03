@@ -19,6 +19,8 @@ import type { LessonMemoryConfig, LessonSessionMemory } from './lesson-memory.ty
 import type { FreedomMode } from '../../../src/tutor-runtime/tutor-runtime.types';
 import type { CoursePackage, LearningUnit } from '../../../src/course-package/course-package.types';
 import type { ModelProvider } from '../model/model-provider.types';
+import type { LessonMemoryMode } from './lesson-memory.types';
+import type { TutorPromptVariant } from './tutor-prompt-variants';
 
 /**
  * Try to read a structured action envelope from a model reply. Weak models
@@ -79,6 +81,10 @@ export async function runHarnessTurn(params: {
   /** Lesson memory as of BEFORE this turn (prior turns only). */
   memory: LessonSessionMemory;
   memoryConfig?: Partial<LessonMemoryConfig>;
+  /** Which memory representation to render into the prompt (default: structured). */
+  memoryMode?: LessonMemoryMode;
+  /** Which tutor prompt variant to render (default: full_current_prompt). */
+  promptVariant?: TutorPromptVariant;
 }): Promise<HarnessTurnResult> {
   const { turnId, coursePackage, unit, unitId, learnerMessage, provider, freedomMode, state, memory } = params;
 
@@ -105,6 +111,9 @@ export async function runHarnessTurn(params: {
       attempts: working.turnCount,
     },
     workingMemory: memory.working,
+    memoryMode: params.memoryMode,
+    memoryConfig: params.memoryConfig,
+    promptVariant: params.promptVariant,
   });
 
   const tutorCreatedAt = new Date().toISOString();

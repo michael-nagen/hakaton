@@ -57,6 +57,29 @@ npm install
 
 Requires Node 18+ (uses global `fetch`). TypeScript runs directly via `tsx`.
 
+## Locked default configuration
+
+The evaluation experiments settled on one best-known setup, now the default
+(`src/config/locked-config.ts`):
+
+| Field | Locked value |
+| --- | --- |
+| Model | `Llama-3.2-3B-Instruct-q4f16_1-MLC` (real WebLLM) |
+| Runtime strategy | `repair_pass` |
+| Lesson variant/style | `high_very_guided` |
+| Memory mode | `last_messages_only` |
+| Last messages limit | `8` |
+| Lesson completion | disabled |
+
+Consequences: the default lesson-memory is `last_messages_only(8)`
+(`LESSON_MEMORY_DEFAULTS`), and bare `npm run evaluate` runs ONLY the locked
+combo (Llama × repair_pass) rather than the full matrix. The other models,
+strategies, memory modes and lesson variants remain available for developer
+experiments and to reproduce historical reports — request them explicitly
+(e.g. `--models all --strategies all`, `--memory-mode structured_working_memory`).
+The app's matching local-device default lives in
+`src/lesson-runtime/local-tutor-defaults.ts`.
+
 ## Commands
 
 Run one scenario against the offline mock:
@@ -83,13 +106,45 @@ Re-summarise existing run artifacts:
 npm run report -- --run runs
 ```
 
+Run the internal model × strategy × learner-profile evaluation lab
+(reports land in `reports/model-strategy-evaluation-<timestamp>.{json,md}`):
+
+```bash
+# full matrix: all runnable models, all 5 strategies, all 6 scripted learner
+# profiles, plus every *.scenario.json in scenarios/ as extra cases
+npm run evaluate -- --scenarios scenarios --models all --strategies all
+
+# cheap offline mechanics check
+npm run evaluate -- --models mock --strategies all --profiles all
+
+# one combination
+npm run evaluate -- --models proxy:gemini-flash-lite-latest --strategies repair_pass --profiles struggling-learner
+
+# the REAL on-device Llama 3.2 3B against all strategies (opens a browser bridge)
+npm run evaluate:llama
+```
+
+Notes on honesty: the app's two real offline models (Gemma 2 2B, Llama 3.2 3B)
+run on WebLLM/WebGPU **in a browser only**. Selecting one explicitly (e.g.
+`--models llama_3_2_3b` or `npm run evaluate:llama`) starts a local **browser
+bridge**: the CLI prints a URL, you open it in Chrome/Edge (WebGPU), and the
+page runs the actual on-device model for every turn — the report then says
+"Actual <model> was tested". Broad selectors (`--models all|mock|proxies`) do
+NOT run the WebLLM models; they list them as "not evaluated" so nothing
+on-device is faked. Cloud models on the configured openai-compatible endpoint
+run as clearly labelled proxies. See `docs/webllm-browser-evaluation.md` for the
+bridge details, port/cache notes, and a manual fallback checklist. Proxy model
+list is overridable via `TEACHER_HARNESS_EVAL_PROXY_MODELS`.
+
 Typecheck:
 
 ```bash
 npm run typecheck
 ```
 
-Exit code is non-zero when any scenario fails, so this composes in CI.
+Exit code is non-zero when any scenario fails (`evaluate` always exits 0 when
+the evaluation itself completes — a failing tutor is a result, not an error),
+so this composes in CI.
 
 ## Providers
 

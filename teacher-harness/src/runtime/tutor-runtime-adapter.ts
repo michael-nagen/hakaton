@@ -8,12 +8,16 @@
 // artifacts. No teaching behaviour is added here.
 
 import { buildTutorContext } from '../../../src/tutor-runtime/build-tutor-context';
-import { buildTutorPrompt } from '../../../src/tutor-runtime/build-tutor-prompt';
 import type { FreedomMode, ProgressState, TutorContext } from '../../../src/tutor-runtime/tutor-runtime.types';
 import type { CoursePackage } from '../../../src/course-package/course-package.types';
 import type { ModelProvider } from '../model/model-provider.types';
-import { renderWorkingMemoryForPrompt } from './lesson-memory';
-import type { LessonWorkingMemory } from './lesson-memory.types';
+import { renderMemoryForPrompt } from './lesson-memory';
+import { LESSON_MEMORY_DEFAULTS, type LessonMemoryConfig, type LessonMemoryMode, type LessonWorkingMemory } from './lesson-memory.types';
+import {
+  buildVariantPrompt,
+  DEFAULT_TUTOR_PROMPT_VARIANT,
+  type TutorPromptVariant,
+} from './tutor-prompt-variants';
 
 export interface AdaptedTurnParams {
   coursePackage: CoursePackage;
@@ -28,6 +32,14 @@ export interface AdaptedTurnParams {
    * model receives — never the full archive. Omit for a memoryless turn.
    */
   workingMemory?: LessonWorkingMemory;
+  /**
+   * Which memory representation to render (default: structured_working_memory).
+   * `no_memory` renders nothing regardless of `workingMemory`.
+   */
+  memoryMode?: LessonMemoryMode;
+  memoryConfig?: Partial<LessonMemoryConfig>;
+  /** Which tutor prompt variant to render (default: full_current_prompt). */
+  promptVariant?: TutorPromptVariant;
 }
 
 export interface AdaptedTurnResult {
@@ -41,21 +53,39 @@ export interface AdaptedTurnResult {
   provider: string;
   modelName: string | null;
   kbChunkIds: string[];
+  /** Which memory mode was rendered this turn. */
+  memoryMode: LessonMemoryMode;
+  /** The EXACT memory block appended to the system prompt (empty for no_memory). */
+  memorySentToModel: string;
+  /** Which prompt variant was rendered this turn. */
+  promptVariant: TutorPromptVariant;
+  /** The variant's instruction preamble only (the part that differs) — for artifacts + size metrics. */
+  promptVariantInstructions: string;
+  /** Character counts for prompt-size analysis. */
+  promptSizes: { systemPromptChars: number; instructionChars: number; groundingChars: number };
 }
 
 /** Run one turn through the real runtime context/prompt path + the provider. */
 export async function runAdaptedTutorTurn(params: AdaptedTurnParams): Promise<AdaptedTurnResult> {
   const { coursePackage, unitId, userMessage, provider, freedomMode, progress, maxChunks, workingMemory } = params;
+  const memoryMode: LessonMemoryMode = params.memoryMode ?? LESSON_MEMORY_DEFAULTS.mode;
+  const promptVariant: TutorPromptVariant = params.promptVariant ?? DEFAULT_TUTOR_PROMPT_VARIANT;
 
   const context = buildTutorContext({ coursePackage, unitId, userMessage, freedomMode, progress, maxChunks });
-  const prompt = buildTutorPrompt({ context });
+  // The prompt-variant builder produces the system+user prompt. For
+  // full_current_prompt it IS the app's real prompt; other variants swap only
+  // the instruction preamble while keeping identical grounding + user prompt.
+  const prompt = buildVariantPrompt({ context, variant: promptVariant });
 
-  // The app's runtime builds the unit context/prompt untouched; the harness
-  // then appends its own lesson working memory to the SYSTEM prompt. The learner
-  // message stays the user turn. This is where "only the compact memory reaches
-  // the model" is enforced — the full archive is never sent.
-  const systemPrompt = workingMemory
-    ? `${prompt.systemPrompt}\n\n${renderWorkingMemoryForPrompt(workingMemory)}`
+  // The harness then appends ONLY the selected memory representation to the
+  // SYSTEM prompt. renderMemoryForPrompt is the single place that decides what
+  // memory text is sent — and it never renders the full archive. `no_memory`
+  // (or no working memory) appends nothing.
+  const memorySentToModel = workingMemory
+    ? renderMemoryForPrompt({ working: workingMemory, mode: memoryMode, config: params.memoryConfig })
+    : '';
+  const systemPrompt = memorySentToModel
+    ? `${prompt.systemPrompt}\n\n${memorySentToModel}`
     : prompt.systemPrompt;
 
   const start = Date.now();
@@ -74,5 +104,14 @@ export async function runAdaptedTutorTurn(params: AdaptedTurnParams): Promise<Ad
     provider: provider.name,
     modelName: provider.modelName ?? null,
     kbChunkIds: context.relevantChunks.map((chunk) => chunk.id),
+    memoryMode,
+    memorySentToModel,
+    promptVariant,
+    promptVariantInstructions: prompt.instructions,
+    promptSizes: {
+      systemPromptChars: systemPrompt.length,
+      instructionChars: prompt.instructions.length,
+      groundingChars: prompt.grounding.length,
+    },
   };
 }

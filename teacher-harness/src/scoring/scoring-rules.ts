@@ -123,6 +123,13 @@ export const BEHAVIOR_RULES: Readonly<Record<string, BehaviorRule>> = {
     detect: (c) => RE_PENDING.test(c.reply) && RE_REJECTED.test(c.reply),
   },
   explains_value_not_ready: { presenceIsGood: true, detect: (c) => RE_VALUE_NOT_READY.test(c.reply) },
+  acknowledges_uncertainty: { presenceIsGood: true, detect: (c) => RE_UNCERTAIN.test(c.reply) },
+  // For off-scope questions either honest behaviour is acceptable: redirect to
+  // the unit OR say the material does not cover it.
+  redirects_or_says_unsure: {
+    presenceIsGood: true,
+    detect: (c) => RE_REDIRECT.test(c.reply) || RE_UNCERTAIN.test(c.reply),
+  },
 
   // Negative behaviours (presence is bad). Used as expected "does_not_*" /
   // "stays_*" (pass when absent) or as forbidden "teaches_*" (fail when present).

@@ -16,7 +16,10 @@ import { loadScenario, type Scenario } from '../loading/load-scenario';
 import { resolveProvider } from '../model/model-client';
 import { initLessonState, type LessonState } from '../runtime/lesson-state.types';
 import { finalizeLessonMemory, initLessonMemory } from '../runtime/lesson-memory';
-import type { LessonSessionMemory } from '../runtime/lesson-memory.types';
+import { LESSON_MEMORY_DEFAULTS, type LessonMemoryMode, type LessonSessionMemory } from '../runtime/lesson-memory.types';
+import { MVP_EXECUTABLE_ACTIONS } from '../runtime/lesson-actions';
+import { lockedConfigMetadata } from '../config/locked-config';
+import { DEFAULT_TUTOR_PROMPT_VARIANT, type TutorPromptVariant } from '../runtime/tutor-prompt-variants';
 import { runHarnessTurn } from '../runtime/run-tutor-turn';
 import { buildScenarioReport } from '../scoring/score-scenario';
 import { scoreTurn } from '../scoring/score-turn';
@@ -37,10 +40,16 @@ export interface RunScenarioOptions {
    * so this only records the request as a memory-reset.json artifact.
    */
   resetMemory?: boolean;
+  /** Which lesson-memory representation to render into the prompt (default: structured). */
+  memoryMode?: LessonMemoryMode;
+  /** Which tutor prompt variant to render (default: full_current_prompt). */
+  promptVariant?: TutorPromptVariant;
 }
 
 export async function runScenario(options: RunScenarioOptions): Promise<ScenarioReport> {
   const timestamp = options.timestamp ?? new Date().toISOString();
+  const memoryMode: LessonMemoryMode = options.memoryMode ?? LESSON_MEMORY_DEFAULTS.mode;
+  const promptVariant: TutorPromptVariant = options.promptVariant ?? DEFAULT_TUTOR_PROMPT_VARIANT;
   const { scenario }: { scenario: Scenario } = loadScenario(options.scenarioPath);
 
   const log = (msg: string) => {
@@ -79,12 +88,31 @@ export async function runScenario(options: RunScenarioOptions): Promise<Scenario
   // 5. Persist inputs up front so a crash mid-run is still debuggable.
   const store = new ArtifactStore({ scenarioId: scenario.id, timestamp });
   store.writeInputs({ scenario, coursePackage: loaded.coursePackage, unit });
+  store.writeRunMetadata({
+    // What THIS run actually did (the plain `run` path is a single model call;
+    // runtime strategies are exercised by the `evaluate*` commands).
+    actual: {
+      provider: resolved.mode,
+      model: resolved.modelName,
+      strategy: 'single_tutor',
+      memoryMode,
+      promptVariant,
+      lastMessagesLimit: LESSON_MEMORY_DEFAULTS.lastMessagesLimit,
+      // Completion is never executable in the harness (see MVP_EXECUTABLE_ACTIONS).
+      lessonCompletion: MVP_EXECUTABLE_ACTIONS.includes('complete_lesson') ? 'enabled' : 'disabled',
+      freedomMode: scenario.freedomMode,
+      courseId,
+      unitId: scenario.unitId,
+    },
+    // The locked best-known configuration this harness defaults to going forward.
+    lockedDefault: lockedConfigMetadata(),
+  });
   if (options.resetMemory) {
     store.writeMemoryReset();
     log('  ↺ memory reset requested — run starts from empty lesson memory (recorded in memory-reset.json).');
   }
 
-  log(`▶ ${scenario.id} — unit ${scenario.unitId} — provider ${resolved.mode}/${resolved.modelName}`);
+  log(`▶ ${scenario.id} — unit ${scenario.unitId} — provider ${resolved.mode}/${resolved.modelName} — memory ${memoryMode} — prompt ${promptVariant}`);
 
   // 6. Run each scripted turn through the controlled loop.
   const turnReports = [];
@@ -100,6 +128,8 @@ export async function runScenario(options: RunScenarioOptions): Promise<Scenario
       freedomMode: scenario.freedomMode,
       state,
       memory, // compact working memory (prior turns) is sent to the model
+      memoryMode, // which representation of that memory is rendered into the prompt
+      promptVariant, // which tutor prompt shape is rendered into the prompt
     });
     state = result.stateAfter; // harness advances its own state
     memory = result.memoryAfter; // harness folds this turn into its memory
@@ -126,10 +156,15 @@ export async function runScenario(options: RunScenarioOptions): Promise<Scenario
           reason: result.actionDecision.reason,
         },
         lessonStateAfter: state,
+        memoryMode: result.runtime.memoryMode,
+        promptVariant: result.runtime.promptVariant,
+        promptSizes: result.runtime.promptSizes,
       },
       score: turnReport,
       workingMemory: memory.working,
       archiveMemory: memory.archive,
+      memorySentToModel: result.runtime.memorySentToModel,
+      promptVariantInstructions: result.runtime.promptVariantInstructions,
     });
 
     log(`   ${turnReport.passed ? '✅' : '❌'} ${turn.id}${turnReport.issues.length ? ` — ${turnReport.issues.length} issue(s)` : ''}`);

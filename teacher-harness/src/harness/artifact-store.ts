@@ -44,6 +44,11 @@ export class ArtifactStore {
     writeJson(resolve(this.runDir, 'unit.snapshot.json'), params.unit);
   }
 
+  /** Persist a small run-metadata block (provider, model, memory mode, ...). */
+  writeRunMetadata(meta: Record<string, unknown>): void {
+    writeJson(resolve(this.runDir, 'run-metadata.json'), meta);
+  }
+
   /** Persist all artifacts for a single turn under turn-<n>/. */
   writeTurn(params: {
     index: number;
@@ -57,6 +62,14 @@ export class ArtifactStore {
     workingMemory?: unknown;
     /** Full conversation archive after this turn. */
     archiveMemory?: unknown;
+    /**
+     * The EXACT memory block appended to the system prompt this turn (per the
+     * selected memory mode). Saved verbatim so we can verify each mode really
+     * sends different memory and that the full archive is never sent.
+     */
+    memorySentToModel?: string;
+    /** The prompt-variant instruction preamble used this turn (the part that varies). */
+    promptVariantInstructions?: string;
   }): void {
     const dir = resolve(this.runDir, `turn-${params.index}`);
     mkdirSync(dir, { recursive: true });
@@ -70,6 +83,17 @@ export class ArtifactStore {
     writeJson(resolve(dir, 'score.json'), params.score);
     if (params.workingMemory !== undefined) writeJson(resolve(dir, 'memory.working.json'), params.workingMemory);
     if (params.archiveMemory !== undefined) writeJson(resolve(dir, 'memory.archive.json'), params.archiveMemory);
+    if (params.memorySentToModel !== undefined) {
+      writeText(
+        resolve(dir, 'memory.sent-to-model.txt'),
+        params.memorySentToModel === ''
+          ? '(no memory sent to the model this turn — memory mode "no_memory" or no prior memory)'
+          : params.memorySentToModel,
+      );
+    }
+    if (params.promptVariantInstructions !== undefined) {
+      writeText(resolve(dir, 'prompt-variant.txt'), params.promptVariantInstructions);
+    }
   }
 
   /** Persist the finalised lesson session memory (working + archive). */
