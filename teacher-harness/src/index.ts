@@ -30,8 +30,9 @@ import { readLatestDeterministic, runLlmJudgeEvaluation } from './evaluation/run
 import { buildJudgeReport, readPriorJudgeReport, writeJudgeReport } from './evaluation/llm-judge-report';
 import { runRealCourseEvaluation } from './evaluation/run-real-course-eval';
 import { buildRealCourseReport, writeRealCourseReport } from './evaluation/real-course-report';
-import { resolveLessonMemoryMode } from './runtime/lesson-memory.types';
+import { LESSON_MEMORY_DEFAULTS, resolveLessonMemoryMode } from './runtime/lesson-memory.types';
 import { resolveTutorPromptVariant } from './runtime/tutor-prompt-variants';
+import { LOCKED_TUTOR_CONFIG } from './config/locked-config';
 
 function fail(message: string): never {
   console.error(`\n✖ ${message}\n`);
@@ -401,6 +402,46 @@ async function commandEvaluateRealCourse(course: string | undefined, unitsCsv: s
   console.log(`        ${jsonPath}`);
 }
 
+/**
+ * Config verification — print the resolved locked defaults from the single
+ * source of truth (LOCKED_TUTOR_CONFIG) and confirm the judge is eval-only.
+ * Pure config resolution: NO Chrome, NO WebLLM, NO OpenAI call, NO evaluation.
+ */
+function commandConfig(): void {
+  const c = LOCKED_TUTOR_CONFIG;
+  // Cross-check the resolvers that connected paths actually use resolve to the lock.
+  const resolvedPromptDefault = resolveTutorPromptVariant(undefined);
+  const resolvedMemory = LESSON_MEMORY_DEFAULTS;
+  const lines = [
+    `promptVariant = ${c.promptVariant}`,
+    `baselinePromptVariant = ${c.baselinePromptVariant}`,
+    `backupPromptVariant = ${c.backupPromptVariant}`,
+    `lessonVariant = ${c.lessonVariant}`,
+    `model = ${c.modelName}`,
+    `strategy = ${c.strategy}`,
+    `memoryMode = ${c.memoryMode}`,
+    `lastMessagesLimit = ${c.lastMessagesLimit}`,
+    `lessonCompletion = ${c.lessonCompletion === 'disabled' ? 'false' : 'true'}`,
+    `judge = eval-only, not default runtime (run \`npm run evaluate:judge\`; provider default ${c.judgeProvider})`,
+  ];
+  console.log('\nTeacher Harness — resolved locked defaults (source: src/config/locked-config.ts)\n');
+  console.log(lines.join('\n'));
+
+  // Consistency guards: the connected resolvers must agree with the lock.
+  const problems: string[] = [];
+  if (resolvedPromptDefault !== c.promptVariant) problems.push(`plain-run prompt default resolves to "${resolvedPromptDefault}", expected "${c.promptVariant}"`);
+  if (resolvedMemory.mode !== c.memoryMode) problems.push(`memory default mode "${resolvedMemory.mode}" != locked "${c.memoryMode}"`);
+  if (resolvedMemory.lastMessagesLimit !== c.lastMessagesLimit) problems.push(`memory limit ${resolvedMemory.lastMessagesLimit} != locked ${c.lastMessagesLimit}`);
+  console.log('');
+  if (problems.length === 0) {
+    console.log('✅ connected resolvers agree with the locked defaults.');
+  } else {
+    console.log('❌ config drift detected:');
+    for (const p of problems) console.log(`   - ${p}`);
+    process.exitCode = 1;
+  }
+}
+
 async function main(): Promise<void> {
   const args = parseCliArgs(process.argv.slice(2));
   switch (args.command) {
@@ -433,6 +474,9 @@ async function main(): Promise<void> {
       break;
     case 'evaluate-real-course':
       await commandEvaluateRealCourse(args.course, args.units);
+      break;
+    case 'config':
+      commandConfig();
       break;
   }
 }

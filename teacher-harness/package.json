@@ -16,6 +16,7 @@
     "evaluate:prompts": "tsx src/index.ts evaluate-prompts",
     "evaluate:judge": "tsx src/index.ts evaluate-judge",
     "evaluate:real-course": "tsx src/index.ts evaluate-real-course",
+    "config": "tsx src/index.ts config",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {

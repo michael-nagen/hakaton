@@ -18,7 +18,8 @@ export type Command =
   | 'evaluate-memory'
   | 'evaluate-prompts'
   | 'evaluate-judge'
-  | 'evaluate-real-course';
+  | 'evaluate-real-course'
+  | 'config';
 
 export interface CliArgs {
   command: Command;
@@ -67,6 +68,7 @@ const COMMANDS: readonly Command[] = [
   'evaluate-prompts',
   'evaluate-judge',
   'evaluate-real-course',
+  'config',
 ];
 
 function readFlag(argv: string[], flag: string): string | undefined {
@@ -93,7 +95,8 @@ export function parseCliArgs(argv: string[]): CliArgs {
         '  evaluate-memory            (fixed: Llama 3.2 3B WebLLM + repair_pass + high_very_guided; varies memory mode)\n' +
         '  evaluate-prompts           (fixed baseline; varies tutor prompt variant across 12 learner profiles)\n' +
         '  evaluate-judge             (LLM-judge pass over the top-2 prompt variants; reuses prior tutor outputs)\n' +
-        '  evaluate-real-course [--course <path>] [--units <id,id>]  (top-2 validation on a REAL course; real Llama tutor + OpenAI judge)',
+        '  evaluate-real-course [--course <path>] [--units <id,id>]  (top-3 validation on a REAL course; real Llama tutor + OpenAI judge)\n' +
+        '  config                     (print the resolved locked defaults; no Chrome/WebLLM/OpenAI/eval)',
     );
   }
 

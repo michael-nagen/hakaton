@@ -16,6 +16,7 @@
 
 import { buildTutorPrompt } from '../../../src/tutor-runtime/build-tutor-prompt';
 import type { TutorContext } from '../../../src/tutor-runtime/tutor-runtime.types';
+import { LOCKED_TUTOR_CONFIG } from '../config/locked-config';
 
 export type TutorPromptVariant =
   | 'full_current_prompt'
@@ -32,7 +33,11 @@ export const TUTOR_PROMPT_VARIANTS: readonly TutorPromptVariant[] = [
   'checklist_prompt',
 ];
 
-export const DEFAULT_TUTOR_PROMPT_VARIANT: TutorPromptVariant = 'full_current_prompt';
+// The default prompt variant for the plain `run`/`batch` path is sourced from
+// the single source of truth (LOCKED_TUTOR_CONFIG) so it can never drift from
+// the locked decision (structured_rules_prompt). full_current_prompt is kept
+// available as the explicit baseline; compact_prompt as the backup.
+export const DEFAULT_TUTOR_PROMPT_VARIANT: TutorPromptVariant = LOCKED_TUTOR_CONFIG.promptVariant;
 
 /** Coerce/validate a prompt-variant string; throws on an invalid value. */
 export function resolveTutorPromptVariant(value: unknown): TutorPromptVariant {

@@ -79,10 +79,10 @@ export interface LessonSessionMemory {
  * archives memory internally. The full archive is never sent in any mode.
  *
  *   no_memory                  — no prior lesson memory at all
- *   last_messages_only         — only the last N verbatim messages
+ *   last_messages_only         — only the last N verbatim messages (LOCKED DEFAULT, N=8)
  *   summary_only               — only a compact deterministic summary
  *   summary_plus_last_messages — compact summary + last N messages
- *   structured_working_memory  — the full structured working memory (default/current)
+ *   structured_working_memory  — the full structured working memory (dev/eval option)
  */
 export type LessonMemoryMode =
   | 'no_memory'
