@@ -10,6 +10,7 @@
 
 import type { EvalStrategyId } from '../evaluation/eval-types';
 import type { LessonMemoryMode } from '../runtime/lesson-memory.types';
+import type { TutorPromptVariant } from '../runtime/tutor-prompt-variants';
 
 export interface LockedTutorConfig {
   /** Real WebLLM model id (on-device). */
@@ -21,8 +22,22 @@ export interface LockedTutorConfig {
   lessonVariant: string;
   memoryMode: LessonMemoryMode;
   lastMessagesLimit: number;
-  /** Lesson completion stays disabled — the harness never marks a lesson done. */
+  /** Lesson completion stays disabled (false) — the harness never marks a lesson done. */
   lessonCompletion: 'disabled';
+  /**
+   * The chosen local-device Tutor prompt DEFAULT. Locked deterministically
+   * after evaluation: structured_rules_prompt won the real-course OpenAI-judge
+   * comparison while being far shorter than the full prompt. This is the single
+   * internal default path — NOT exposed in the learner UI, NOT the production
+   * prompt (which is unchanged).
+   */
+  promptVariant: TutorPromptVariant;
+  /** Quality baseline to beat — NOT the default. */
+  baselinePromptVariant: TutorPromptVariant;
+  /** Backup compact candidate — NOT the default (promising but unconfirmed at 5 units). */
+  backupPromptVariant: TutorPromptVariant;
+  /** Default judge provider for evaluation (OpenAI). */
+  judgeProvider: 'openai';
 }
 
 export const LOCKED_TUTOR_CONFIG: LockedTutorConfig = {
@@ -33,6 +48,10 @@ export const LOCKED_TUTOR_CONFIG: LockedTutorConfig = {
   memoryMode: 'last_messages_only',
   lastMessagesLimit: 8,
   lessonCompletion: 'disabled',
+  promptVariant: 'structured_rules_prompt',
+  baselinePromptVariant: 'full_current_prompt',
+  backupPromptVariant: 'compact_prompt',
+  judgeProvider: 'openai',
 };
 
 /** A flat metadata block for reports/artifacts, showing the locked setup. */
@@ -44,5 +63,9 @@ export function lockedConfigMetadata(): Record<string, string | number> {
     memoryMode: LOCKED_TUTOR_CONFIG.memoryMode,
     lastMessagesLimit: LOCKED_TUTOR_CONFIG.lastMessagesLimit,
     lessonCompletion: LOCKED_TUTOR_CONFIG.lessonCompletion,
+    promptVariant: LOCKED_TUTOR_CONFIG.promptVariant,
+    baselinePromptVariant: LOCKED_TUTOR_CONFIG.baselinePromptVariant,
+    backupPromptVariant: LOCKED_TUTOR_CONFIG.backupPromptVariant,
+    judgeProvider: LOCKED_TUTOR_CONFIG.judgeProvider,
   };
 }

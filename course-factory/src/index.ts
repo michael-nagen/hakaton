@@ -21,6 +21,8 @@ import { validateCoursePackage } from './validation/validate-course-package';
 import type { CoursePackage } from './validation/validate-course-package';
 import { renderCoursePreview } from './harness/render-preview';
 import { registerCourse } from './registration/register-course';
+import { runVariants } from './variants/run-variants';
+import { DEFAULT_LESSON_VARIANT } from './variants/variant-specs';
 
 const RUNS_ROOT = resolve(process.cwd(), 'runs');
 const OUTPUT_ROOT = resolve(process.cwd(), 'output');
@@ -33,6 +35,10 @@ async function main(): Promise<void> {
       return cmdPlan(args.input, args.mock);
     case 'generate':
       return cmdGenerate(args.input, args.mock, args.preview);
+    case 'generate:variants':
+      return cmdGenerateVariants(args.input, args.mock, args.preview);
+    case 'generate:variant':
+      return cmdGenerateVariant(args.input, args.variant, args.mock, args.preview);
     case 'validate':
       return cmdValidate(args.file);
     case 'repair':
@@ -125,6 +131,44 @@ async function cmdGenerate(input: string | undefined, mock: boolean, preview: bo
     console.log('\n  NOTE: mock provider → placeholder content only. Configure .env for real generation.');
   }
   console.log(`\n  To register into the app:  npm run register -- --file output/${result.courseId}.final.json`);
+}
+
+async function cmdGenerateVariants(input: string | undefined, mock: boolean, preview: boolean): Promise<void> {
+  const result = await runVariants({ input, forceMock: mock, withPreviews: preview });
+  const ok = result.outcomes.filter((o) => o.status === 'success').length;
+
+  console.log(`\n✔ Generated ${ok}/${result.outcomes.length} variant(s) for "${result.courseId}" (provider=${result.provider}).`);
+  for (const o of result.outcomes) {
+    const badge = o.status === 'success' ? '✅' : '❌';
+    const detail = o.status === 'success' ? '' : ` — ${[...o.schemaErrors, ...o.gateReasons].slice(0, 3).join('; ')}`;
+    console.log(`  ${badge} ${o.spec.variantId}  (${o.spec.lessonDetailLevel} detail / ${o.spec.tutorGuidanceLevel} guidance)${detail}`);
+  }
+  console.log(`\n  Output dir: ${result.outDir}`);
+  if (result.manifestPath) console.log(`  Manifest:   ${result.manifestPath}`);
+  if (result.reportMdPath) console.log(`  Report:     ${result.reportMdPath}`);
+  console.log('\n  NOTE: no teaching-quality comparison was done. Next step: Teacher Harness evaluation.');
+  if (mock) console.log('  NOTE: mock provider → placeholder base content. Configure .env for real generation.');
+  if (result.outcomes.some((o) => o.status === 'failed')) process.exitCode = 1;
+}
+
+async function cmdGenerateVariant(
+  input: string | undefined,
+  variant: string | undefined,
+  mock: boolean,
+  preview: boolean,
+): Promise<void> {
+  // Default lesson-generation style is locked to high_very_guided; pass
+  // --variant <id> to override with another (developer) style.
+  const chosen = variant ?? DEFAULT_LESSON_VARIANT;
+  if (!variant) console.log(`  No --variant given → using default lesson style "${chosen}".`);
+  const result = await runVariants({ input, forceMock: mock, onlyVariant: chosen, withPreviews: preview });
+  const o = result.outcomes[0];
+  const badge = o.status === 'success' ? '✅' : '❌';
+  console.log(`\n${badge} Variant ${o.spec.variantId} → ${resolve(result.outDir, o.file)}`);
+  if (o.status === 'failed') {
+    for (const r of [...o.schemaErrors, ...o.gateReasons]) console.error(`  - ${r}`);
+    process.exitCode = 1;
+  }
 }
 
 function cmdValidate(file: string | undefined): void {
