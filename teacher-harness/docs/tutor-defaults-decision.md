@@ -33,16 +33,28 @@ Source of truth: [`src/config/locked-config.ts`](../src/config/locked-config.ts)
 - `compact_prompt` is a **backup**; a partial 5-unit top-3 run hinted it is competitive
   (~8.18 vs structured ~8.27) but that run was stopped early — unconfirmed.
 
-## TODO — next quality improvement: `missed_mistake`
+## Applied — stuck-learner rule (2026-07-03)
 
-The main remaining weakness across all evaluations is **`missed_mistake`**: when a learner
-matches/repeats a listed common mistake, the tutor sometimes continues without correcting
-it explicitly.
+Manual testing found a **stuck-learner loop**: when the learner said "tell me" / "i don't
+know" repeatedly, the tutor kept asking more leading questions instead of just explaining.
 
-**Planned minimal change (NOT done yet — deliberately deferred to keep the locked default
-identical to what was evaluated):** add ONE line to `structured_rules_prompt` such as
-_"If the learner repeats a listed common mistake, correct that mistake explicitly before
-continuing."_ Then re-judge a small targeted subset (structured_rules_prompt, a few
-mistake-heavy profiles) rather than a full matrix.
+Minimal targeted change (NOT a redesign) — added two rules to `structured_rules_prompt`
+(`src/runtime/tutor-prompt-variants.ts`):
+- **Rule 7:** if the learner says they don't know, asks you to just tell them, or misses the
+  same idea twice → STOP asking open-ended/leading questions; give a short direct
+  explanation + ONE concrete example from the reference material, then one very easy check
+  question.
+- **Rule 8:** don't repeat the same question/hint pattern more than twice; prefer a concrete
+  worked example over confusing "what if" hypotheticals.
 
-Do **not** do a broad prompt redesign for this.
+Verified by a small targeted smoke (structured_rules_prompt, real Llama, variables unit 1,
+stuck/vague/struggling profiles, OpenAI judge): the tutor now leads with a direct
+explanation + concrete example ("labelled box", `x = 5`) and exits the loop — OpenAI judge
+mostly 9–10/10, learner-handling 5/5. No broad matrix was run.
+
+## TODO — still watch: `missed_mistake`
+
+`missed_mistake` remains the broader weakness to monitor (rule 3 already covers correcting
+listed mistakes; rule 7 now also forces a direct correction when the learner is stuck). If a
+future check still shows misses, extend rule 3 minimally and re-judge a small subset — do
+**not** do a broad prompt redesign.
