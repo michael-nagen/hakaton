@@ -33,8 +33,10 @@ import { TUTOR_STRATEGIES } from '../lesson-runtime/tutor-strategy';
 // BYOK keys are validated with a tiny probe and stored on-device only. Styled
 // with the same design tokens as the other standalone pages (no CSS library).
 
-const GEMINI_KEY_PAGE = 'https://aistudio.google.com/apikey';
-const OPENROUTER_KEY_PAGE = 'https://openrouter.ai/settings/keys';
+// Exported so the new Choose-AI-Guide screen reuses the exact same "get a key"
+// destinations instead of re-guessing provider URLs.
+export const GEMINI_KEY_PAGE = 'https://aistudio.google.com/apikey';
+export const OPENROUTER_KEY_PAGE = 'https://openrouter.ai/settings/keys';
 
 type ValStatus = 'idle' | 'validating' | 'valid' | 'invalid';
 interface Validation {
@@ -202,8 +204,6 @@ function providerStatus(params: {
   if (params.error) return { label: 'Needs setup', tone: 'var(--sunset-500, #FF8B62)' };
   const warn = 'var(--sunset-500, #FF8B62)';
   switch (params.type) {
-    case 'built_in':
-      return { label: 'Ready', tone: 'var(--evergreen-500)' };
     case 'local_model':
       switch (params.localStatus) {
         case 'installed':
@@ -230,8 +230,17 @@ function providerStatus(params: {
 }
 
 export function AiSetupPage() {
-  const { config, setAiProvider, clearAiProvider, activeModelProvider, providerError, tutorStrategy, setTutorStrategy } =
-    useAiProvider();
+  const {
+    config,
+    setAiProvider,
+    clearAiProvider,
+    activeModelProvider,
+    providerError,
+    tutorStrategy,
+    setTutorStrategy,
+    lessonCompletionEnabled,
+    setLessonCompletionEnabled,
+  } = useAiProvider();
   const activeType: AiProviderType = config.type;
 
   // ── Gemini ─────────────────────────────────────────────────────────
@@ -615,7 +624,7 @@ export function AiSetupPage() {
               {testResult.status === 'validating' ? 'Testing…' : 'Test current provider'}
             </button>
             <button type="button" style={ghostBtn()} onClick={clearAiProvider}>
-              Reset to built-in
+              Reset provider
             </button>
           </div>
           {testResult.status !== 'idle' && testResult.status !== 'validating' && (
@@ -686,14 +695,63 @@ export function AiSetupPage() {
           </p>
         </Card>
 
-        {/* ── Built-in ── */}
-        <Card title="Use built-in AI" badge={{ text: 'Recommended', tone: 'var(--evergreen-500)' }} active={activeType === 'built_in'}>
-          <p style={disclosure}>Start learning immediately. Limited free usage. Best for trying things out right away.</p>
-          <div>
-            <button type="button" style={primaryBtn(activeType === 'built_in')} disabled={activeType === 'built_in'} onClick={() => setAiProvider({ type: 'built_in' })}>
-              {activeType === 'built_in' ? 'Selected' : 'Use built-in AI'}
-            </button>
-          </div>
+        {/* ── Lesson completion ── */}
+        {/* When off, the tutor never finishes a lesson: the "finish" action is
+            removed from the model's options and the runtime never marks a lesson
+            completed, so the lesson stays open the whole time. */}
+        <Card title="Lesson completion" badge={{ text: 'Lesson flow', tone: 'var(--fg-3)' }} active={false}>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={!lessonCompletionEnabled}
+            onClick={() => setLessonCompletionEnabled(!lessonCompletionEnabled)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              textAlign: 'left',
+              padding: '10px 12px',
+              borderRadius: 10,
+              cursor: 'pointer',
+              background: 'transparent',
+              color: 'var(--fg-1)',
+              fontFamily: 'inherit',
+              fontSize: 14,
+              border: `1px solid ${!lessonCompletionEnabled ? 'var(--evergreen-500)' : 'var(--maestro-ink-3)'}`,
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                position: 'relative',
+                flexShrink: 0,
+                width: 34,
+                height: 20,
+                borderRadius: 999,
+                background: !lessonCompletionEnabled ? 'var(--evergreen-500)' : 'var(--maestro-ink-3)',
+                transition: 'background var(--anim-fast, 120ms)',
+              }}
+            >
+              <span
+                style={{
+                  position: 'absolute',
+                  top: 2,
+                  left: !lessonCompletionEnabled ? 16 : 2,
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  background: 'var(--bg-surface)',
+                  transition: 'left var(--anim-fast, 120ms)',
+                }}
+              />
+            </span>
+            <span style={{ flex: 1 }}>Keep the lesson open (never finish)</span>
+          </button>
+          <p style={{ ...disclosure, margin: 0 }}>
+            {lessonCompletionEnabled
+              ? 'The tutor may finish a lesson once the student has mastered every step.'
+              : 'The tutor will never end a lesson — no "finish" option and no completed state, so the lesson stays open the whole time.'}
+          </p>
         </Card>
 
         {/* ── Gemini (guided BYOK) ── */}

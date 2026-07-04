@@ -18,6 +18,7 @@ import {
   buildLessonSteps,
   initLessonState,
   loadProgress,
+  resolveLocalRuntimeSettings,
   runLessonTurn,
   saveProgress,
   clearProgress,
@@ -68,9 +69,16 @@ export interface UseLessonSession {
 export function useLessonSession(params: {
   course: CoursePackage;
   unit: LearningUnit;
+  /**
+   * Optional personalization (style only). Its instruction is appended to the
+   * ACTUAL selected tutor prompt each turn; it never affects progression.
+   */
+  teachingPreference?: { instruction: string } | null;
 }): UseLessonSession {
   const { course, unit } = params;
-  const { activeTutorProvider, providerError, config, tutorStrategy } = useAiProvider();
+  const teachingPreferenceInstruction = params.teachingPreference?.instruction;
+  const { activeTutorProvider, providerError, config, tutorStrategy, lessonCompletionEnabled } =
+    useAiProvider();
 
   const [state, setState] = useState<LessonSessionState>(() =>
     initLessonState({
@@ -114,14 +122,24 @@ export function useLessonSession(params: {
       setLoading(true);
       setError(null);
       try {
+        // The LOCAL / on-device path uses the locked best-known defaults
+        // (repair_pass, last-messages-only window of 8, completion disabled)
+        // regardless of the /ai-setup selector. Cloud/BYOK providers keep the
+        // user's selected strategy + completion and the default 5-message window.
+        const runtime = resolveLocalRuntimeSettings({
+          providerType: config.type,
+          selectedStrategy: tutorStrategy,
+          selectedCompletionEnabled: lessonCompletionEnabled,
+        });
         const result = await runLessonTurn({
           unit,
           state: stateRef.current,
           studentAnswer: answer,
           tutorProvider: activeTutorProvider,
-          // How the runtime wraps the call — selected in /ai-setup. The page
-          // stays provider- AND strategy-agnostic; it only sends messages.
-          strategy: tutorStrategy,
+          strategy: runtime.strategy,
+          allowCompletion: runtime.allowCompletion,
+          recentMessagesLimit: runtime.recentMessagesLimit,
+          teachingPreferenceInstruction,
         });
         setState(result.state);
         saveProgress(result.state);
@@ -133,7 +151,7 @@ export function useLessonSession(params: {
         setLoading(false);
       }
     },
-    [activeTutorProvider, providerError, unit, loading, tutorStrategy],
+    [activeTutorProvider, providerError, unit, loading, config.type, tutorStrategy, lessonCompletionEnabled, teachingPreferenceInstruction],
   );
 
   const resetLesson = useCallback(() => {

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0A0A1A"/>
+      <stop offset="38%" stop-color="#231B4A"/>
+      <stop offset="62%" stop-color="#6B2E5A"/>
+      <stop offset="80%" stop-color="#B23A1C"/>
+      <stop offset="100%" stop-color="#FF8B62"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="34%" cy="78%" r="42%">
+      <stop offset="0%" stop-color="#FFD79A" stop-opacity="0.95"/>
+      <stop offset="35%" stop-color="#FF8B62" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#FF8B62" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#sky)"/>
+  <circle cx="544" cy="780" r="380" fill="url(#sun)"/>
+  <circle cx="544" cy="770" r="120" fill="#FFE0B9" opacity="0.9"/>
+  <!-- layered mountain ridges -->
+  <path d="M0 760 L260 620 L520 730 L820 560 L1120 720 L1380 610 L1600 700 L1600 1000 L0 1000 Z" fill="#1A3426" opacity="0.55"/>
+  <path d="M0 840 L300 740 L640 830 L960 700 L1280 820 L1600 760 L1600 1000 L0 1000 Z" fill="#141B18" opacity="0.85"/>
+  <path d="M0 920 L400 860 L820 915 L1200 850 L1600 905 L1600 1000 L0 1000 Z" fill="#0A0A0A"/>
+</svg>

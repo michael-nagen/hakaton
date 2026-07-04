@@ -23,21 +23,28 @@ import { createTutorProvider } from '../tutor-runtime';
 import type { TutorProvider } from '../tutor-runtime';
 import { resolveTutorStrategy } from '../lesson-runtime/tutor-strategy';
 import type { TutorRuntimeStrategy } from '../lesson-runtime/tutor-strategy';
+import { resolveLessonFlowMode } from '../lesson-runtime/lesson-flow-mode';
+import type { LessonFlowMode } from '../lesson-runtime/lesson-flow-mode';
 
 const STORAGE_KEY = 'maestro.aiProvider';
 const STRATEGY_STORAGE_KEY = 'maestro.tutorStrategy';
+const COMPLETION_STORAGE_KEY = 'maestro.lessonCompletion';
+const FLOW_MODE_STORAGE_KEY = 'maestro.lessonFlowMode';
 
 const DISPLAY_NAMES: Record<AiProviderType, string> = {
-  built_in: 'Built-in AI',
   gemini_byok: 'Gemini (your key)',
   openrouter_byok: 'OpenRouter (your key)',
   local_model: 'Local model (offline)',
   custom: 'Custom provider',
 };
 
-/** The safe default: built-in, no key, works immediately. */
+/**
+ * The default: Gemini BYOK with no key yet. There is no mock/offline fallback —
+ * the tutor only runs on a real provider, so this reads as "needs setup" on the
+ * AI setup screen until the user connects one.
+ */
 export function defaultAiProviderConfig(): AiProviderConfig {
-  return { type: 'built_in', displayName: DISPLAY_NAMES.built_in, enabled: true };
+  return { type: 'gemini_byok', displayName: DISPLAY_NAMES.gemini_byok, enabled: true };
 }
 
 function loadConfig(): AiProviderConfig {
@@ -90,6 +97,19 @@ interface AiProviderContextValue {
   /** How the lesson runtime wraps the model call (persisted; default single_tutor). */
   tutorStrategy: TutorRuntimeStrategy;
   setTutorStrategy: (strategy: TutorRuntimeStrategy) => void;
+  /**
+   * Whether the tutor may finish a lesson (persisted; default true). When false
+   * the lesson stays open forever — no "finish" tool, no "completed" state.
+   */
+  lessonCompletionEnabled: boolean;
+  setLessonCompletionEnabled: (enabled: boolean) => void;
+  /**
+   * Which lesson experience the player runs (persisted; default 'current').
+   * 'deterministic_steps' opts into the app-controlled prepared-step flow;
+   * lessons without deterministic data fall back to the current flow.
+   */
+  lessonFlowMode: LessonFlowMode;
+  setLessonFlowMode: (mode: LessonFlowMode) => void;
 }
 
 const AiProviderContext = createContext<AiProviderContextValue | null>(null);
@@ -111,6 +131,45 @@ export function AiProviderProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(STRATEGY_STORAGE_KEY, next);
     } catch {
       // Non-fatal: strategy still lives in memory for this session.
+    }
+  }, []);
+
+  // Lesson completion is enabled unless the user explicitly turned it off
+  // (persisted as the string 'false'); any other/absent value means enabled.
+  const [lessonCompletionEnabled, setCompletionState] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(COMPLETION_STORAGE_KEY) !== 'false';
+    } catch {
+      return true;
+    }
+  });
+
+  const setLessonCompletionEnabled = useCallback((enabled: boolean) => {
+    setCompletionState(enabled);
+    try {
+      localStorage.setItem(COMPLETION_STORAGE_KEY, String(enabled));
+    } catch {
+      // Non-fatal: the choice still lives in memory for this session.
+    }
+  }, []);
+
+  // Lesson flow mode — persisted like the other small runtime prefs. Default
+  // 'current' so behavior is unchanged until the user opts into the new flow.
+  const [lessonFlowMode, setFlowModeState] = useState<LessonFlowMode>(() => {
+    try {
+      return resolveLessonFlowMode(localStorage.getItem(FLOW_MODE_STORAGE_KEY));
+    } catch {
+      return resolveLessonFlowMode(undefined);
+    }
+  });
+
+  const setLessonFlowMode = useCallback((mode: LessonFlowMode) => {
+    const next = resolveLessonFlowMode(mode);
+    setFlowModeState(next);
+    try {
+      localStorage.setItem(FLOW_MODE_STORAGE_KEY, next);
+    } catch {
+      // Non-fatal: the choice still lives in memory for this session.
     }
   }, []);
 
@@ -165,6 +224,10 @@ export function AiProviderProvider({ children }: { children: ReactNode }) {
     providerError,
     tutorStrategy,
     setTutorStrategy,
+    lessonCompletionEnabled,
+    setLessonCompletionEnabled,
+    lessonFlowMode,
+    setLessonFlowMode,
   };
 
   return <AiProviderContext.Provider value={value}>{children}</AiProviderContext.Provider>;

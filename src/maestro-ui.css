@@ -1,0 +1,158 @@
+/* =========================================================================
+   Maestro Design System tokens — imported from the claude.ai/design project
+   "AI Fundamentals" and scoped under `.mds` so the new MVP flow (Welcome →
+   Choose Guide → Choose Path → Course path → Lesson parts → Guided room)
+   renders exactly as designed WITHOUT altering the existing dark/technical
+   screens, which use a separate `--fg-*` / `--bg-*` token namespace.
+
+   Fonts (Wix Madefor Display/Text) are already @font-face'd in index.css.
+   ========================================================================= */
+
+.mds {
+  /* ---------- Type families ---------- */
+  --font-display: "Wix Madefor Display", ui-sans-serif, system-ui, sans-serif;
+  --font-text:    "Wix Madefor Text",    ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    "Menlo", ui-monospace, SFMono-Regular, Monaco, Consolas, monospace;
+
+  /* ---------- Primary ---------- */
+  --color-white: #FFFFFF;
+  --color-black: #0A0A0A;
+
+  /* ---------- Neutrals ---------- */
+  --neutral-25:  #FCFCFA;
+  --neutral-50:  #F9F9F6;
+  --neutral-75:  #F8F7F2;
+  --neutral-100: #F5F5F0;
+  --neutral-150: #EFEEE7;
+  --neutral-200: #ECEBE4;
+  --neutral-250: #E6E5DD;
+  --neutral-300: #E2E1DA;
+  --neutral-350: #D8D7CE;
+  --neutral-400: #D1D0CA;
+  --neutral-450: #C9C8C0;
+  --neutral-500: #AAAAA5;
+  --neutral-600: #989793;
+  --neutral-700: #858581;
+  --neutral-800: #72716E;
+  --neutral-900: #5F5E5C;
+  --neutral-950: #393937;
+
+  /* ---------- Brand: Evergreen ---------- */
+  --evergreen-50:  #F7FFE5;
+  --evergreen-100: #E8FFBA;
+  --evergreen-200: #E0FFA5;
+  --evergreen-300: #CEF585;
+  --evergreen-400: #C0EC6E;
+  --evergreen-500: #A5DB6D;
+  --evergreen-600: #51985C;
+  --evergreen-700: #27764B;
+  --evergreen-800: #246341;
+  --evergreen-900: #1F4F35;
+  --evergreen-950: #1A3426;
+
+  /* ---------- Brand: Lavender ---------- */
+  --lavender-100: #E3E8FD;
+  --lavender-500: #A6B2F7;
+  --lavender-700: #5C6BCB;
+
+  /* ---------- Brand: Sunset ---------- */
+  --sunset-100: #FFDFD2;
+  --sunset-500: #FF8B62;
+  --sunset-800: #D34C24;
+
+  /* ---------- Brand: Gold ---------- */
+  --gold-100: #FFECD4;
+  --gold-500: #EAAD5E;
+  --gold-800: #936629;
+
+  /* ---------- Semantic: Success ---------- */
+  --success-100: #DCF6EA;
+  --success-700: #059273;
+
+  /* ---------- Interaction-surface scale (light) ---------- */
+  --surface-0: var(--color-white);
+  --surface-1: var(--neutral-100);
+  --surface-2: var(--neutral-150);
+  --surface-3: var(--neutral-250);
+
+  --color-bg:             var(--surface-0);
+  --color-bg-subtle:      var(--surface-1);
+  --color-surface:        var(--surface-0);
+  --color-surface-raised: var(--surface-0);
+  --color-bg-hover:       var(--surface-1);
+  --color-bg-selected:    var(--surface-2);
+  --color-bg-pressed:     var(--surface-3);
+  --color-surface-muted:  var(--neutral-75);
+
+  --color-fg:            var(--color-black);
+  --color-fg-secondary:  var(--neutral-900);
+  --color-fg-tertiary:   var(--neutral-700);
+  --color-fg-disabled:   var(--neutral-500);
+  --color-border:        var(--neutral-300);
+  --color-border-strong: var(--neutral-400);
+  --color-border-input:  var(--neutral-400);
+
+  /* Brand text tokens */
+  --evergreen-text: var(--evergreen-700);
+  --lavender-text:  var(--lavender-700);
+  --sunset-text:    var(--sunset-800);
+  --gold-text:      var(--gold-800);
+  --success-text:   var(--success-700);
+
+  /* Brand tile-surface tokens */
+  --evergreen-tile: var(--evergreen-100);
+  --lavender-tile:  var(--lavender-100);
+  --sunset-tile:    var(--sunset-100);
+  --gold-tile:      var(--gold-100);
+  --success-tile:   var(--success-100);
+  --success-icon:   var(--success-700);
+
+  /* ---------- Radius ---------- */
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-2xl:  24px;
+  --radius-full: 9999px;
+
+  /* ---------- Elevation ---------- */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.06);
+  --shadow-lg: 0 12px 24px -6px rgb(0 0 0 / 0.08);
+
+  /* Page defaults for the flow */
+  font-family: var(--font-text);
+  color: var(--color-fg);
+  background: var(--color-bg);
+}
+
+/* ---------- Scoped input focus ring (matches design .af-input:focus) ------ */
+.mds input:focus,
+.mds textarea:focus,
+.mds select:focus {
+  border-color: var(--color-fg) !important;
+  box-shadow: 0 0 0 4px var(--color-border);
+  outline: none;
+}
+
+/* ---------- Interaction helpers (replace design's style-hover) ------------ */
+.mds-card {
+  transition: border-color 150ms cubic-bezier(0.2,0,0.38,0.9),
+              box-shadow 150ms, transform 80ms;
+}
+.mds-card:not([data-locked="true"]):hover {
+  border-color: var(--color-border-strong);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+.mds-card:not([data-locked="true"]):active { transform: scale(0.994); }
+
+.mds-btn { transition: background-color 150ms cubic-bezier(0.2,0,0.38,0.9); }
+.mds-btn-dark:not(:disabled):hover  { background-color: var(--color-fg-secondary) !important; }
+.mds-btn-ghost:not(:disabled):hover { background-color: var(--color-bg-subtle) !important; }
+
+/* Custom scrollbars inside the flow (matches design .*-scroll) */
+.mds-scroll::-webkit-scrollbar { width: 10px; }
+.mds-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 9999px;
+  border: 3px solid #fff;
+}

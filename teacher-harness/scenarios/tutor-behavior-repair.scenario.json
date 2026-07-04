@@ -1,0 +1,57 @@
+{
+  "id": "tutor-behavior-repair-unit-1",
+  "title": "Tutor teaching-behavior test: stuck / hint / close-enough / partial / wrong / correct",
+  "course": {
+    "source": "file",
+    "path": "fixtures/course-python-print-101.json",
+    "courseId": "course-python-print-101"
+  },
+  "unitId": "py-print-unit-1-print-and-newline",
+  "freedomMode": "guided",
+  "provider": "mock",
+  "description": "Tests the tutor's GENERIC teaching behavior (independent of subject matter) on the unit-1 question 'print(\"one\") then print(\"two\") — how many lines and what is on each?'. Seven scripted learner turns cover: stuck, asking to be told, a close-enough answer, a partial answer, a wrong answer, asking for a hint, and a fully correct answer. Structural behaviors (question count, hint-vs-full-answer, gave-an-explanation, stays-on-unit) are scored deterministically; fuzzy behaviors (accepted close enough, gentle correction, confirmed understanding, not too strict on wording) are checked by the optional LLM judge via the run-tutor-behavior-eval runner.",
+  "turns": [
+    {
+      "id": "turn-1-stuck",
+      "learnerMessage": "I don't know.",
+      "expectedBehaviors": ["direct_help_when_stuck", "single_guiding_question", "gives_hint_not_full_answer"],
+      "forbiddenBehaviors": ["asks_multiple_questions", "teaches_end_keyword", "teaches_f_strings"]
+    },
+    {
+      "id": "turn-2-tell-me",
+      "learnerMessage": "Just tell me the answer.",
+      "expectedBehaviors": ["direct_help_when_stuck", "single_guiding_question"],
+      "forbiddenBehaviors": ["asks_multiple_questions", "teaches_end_keyword", "teaches_f_strings"]
+    },
+    {
+      "id": "turn-3-close-enough",
+      "learnerMessage": "I think they show up on separate lines.",
+      "expectedBehaviors": ["accepts_close_enough", "single_guiding_question"],
+      "forbiddenBehaviors": ["asks_multiple_questions", "teaches_end_keyword"]
+    },
+    {
+      "id": "turn-4-partial",
+      "learnerMessage": "Two lines.",
+      "expectedBehaviors": ["single_guiding_question", "gives_hint_not_full_answer"],
+      "forbiddenBehaviors": ["asks_multiple_questions", "teaches_f_strings"]
+    },
+    {
+      "id": "turn-5-wrong",
+      "learnerMessage": "They print on the same line, like onetwo.",
+      "expectedBehaviors": ["gentle_correction", "corrects_common_mistake", "single_guiding_question"],
+      "forbiddenBehaviors": ["asks_multiple_questions", "teaches_end_keyword", "teaches_f_strings"]
+    },
+    {
+      "id": "turn-6-hint",
+      "learnerMessage": "Can I get a hint?",
+      "expectedBehaviors": ["gives_hint_not_full_answer", "single_guiding_question"],
+      "forbiddenBehaviors": ["gives_full_answer", "asks_multiple_questions", "teaches_end_keyword"]
+    },
+    {
+      "id": "turn-7-correct",
+      "learnerMessage": "Two lines — 'one' on the first line and 'two' on the second, because each print() ends with a new line.",
+      "expectedBehaviors": ["confirms_understanding", "does_not_move_on_too_quickly"],
+      "forbiddenBehaviors": ["teaches_end_keyword", "teaches_f_strings"]
+    }
+  ]
+}

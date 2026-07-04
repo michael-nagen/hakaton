@@ -98,6 +98,74 @@ export interface CommonMistake {
   relatedQuestionId?: string;
 }
 
+// ── Deterministic teaching steps (opt-in, additive) ──────────────────
+//
+// When a unit carries `deterministicSteps`, the app can run it in the
+// "deterministic_steps" lesson flow: the FULL teaching plan is authored here so
+// a weak/local model never has to invent it. In that flow the model only
+// explains, adapts, and helps the learner INSIDE the current step — the app
+// (not the model) owns progression.
+//
+// This block is entirely OPTIONAL and purely additive: units without it behave
+// exactly as before, and the deterministic flow falls back to the current
+// question-driven flow when it is absent. Nothing here changes the existing
+// `questions`/`knowledgeBaseChunks`/`teacherBrain` contract.
+
+/** The prepared, deterministic MCQ shown inside one step. */
+export interface DeterministicStepMcq {
+  /** The question text shown to the learner. */
+  question: string;
+  /** Answer choices (at least 2). */
+  options: string[];
+  /** The correct choice — must be exactly one of `options`. */
+  correctAnswer: string;
+  /** Prepared feedback shown verbatim when the learner answers correctly. */
+  feedbackCorrect: string;
+  /** Prepared feedback shown verbatim when the learner answers incorrectly. */
+  feedbackIncorrect: string;
+}
+
+/**
+ * The prepared open-ended check for a step. The learner answers in free text and
+ * the local model evaluates the answer against `expectedIdea` (a rubric), staying
+ * inside the current step. `expectedIdea`, `acceptableAnswers`, and `hint` are
+ * model-side only — they are NEVER rendered to the learner.
+ */
+export interface DeterministicOpenCheck {
+  /** The open question prompt shown to the learner. */
+  question: string;
+  /** What a good answer should convey (the rubric the model grades against). */
+  expectedIdea: string;
+  /** Example answers that should be accepted (guidance for the model). */
+  acceptableAnswers?: string[];
+  /** Prepared gentle correction / hint the model uses if the learner is off. */
+  hint: string;
+}
+
+/**
+ * One deterministic teaching step/topic within a lesson. A lesson in
+ * deterministic flow is exactly an ordered list of these (typically 3). Each is
+ * fully prepared content the runtime plays in order, ending in EITHER an MCQ
+ * (`mcq`) OR an open-ended check (`open`).
+ */
+export interface DeterministicStep {
+  id: string;
+  /** Short step title, e.g. "Printing text with print()". */
+  title: string;
+  /** Prepared intro/explanation shown when the step opens. */
+  intro: string;
+  /** Optional prepared worked example. */
+  example?: string;
+  /** Prepared MCQ check (present for MCQ steps). Exactly one of mcq/open. */
+  mcq?: DeterministicStepMcq;
+  /** Prepared open-ended check (present for open steps). Exactly one of mcq/open. */
+  open?: DeterministicOpenCheck;
+  /** Deterministic checkpoint prompt, e.g. "Did you understand?". */
+  checkpointPrompt: string;
+  /** Optional short recap shown before advancing to the next step. */
+  summary?: string;
+}
+
 // ── Learning unit ────────────────────────────────────────────────────
 
 /**
@@ -116,6 +184,18 @@ export interface LearningUnit {
   knowledgeBaseChunks: KnowledgeBaseChunk[];
   questions: Question[];
   commonMistakes: CommonMistake[];
+  /**
+   * Optional prepared lesson-opening message for the deterministic flow —
+   * injected as the first tutor message before Step 1 (topic, why it matters,
+   * the subtopics ahead, and the end goal). Additive/optional.
+   */
+  deterministicOverview?: string;
+  /**
+   * Optional prepared teaching plan for the "deterministic_steps" lesson flow.
+   * Absent on legacy units → the deterministic flow falls back to the current
+   * question-driven flow. Additive: does not affect the existing flow.
+   */
+  deterministicSteps?: DeterministicStep[];
 }
 
 // ── Course-level metadata ────────────────────────────────────────────

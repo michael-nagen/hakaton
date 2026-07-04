@@ -8,7 +8,6 @@
 
 /** Which activation path the user chose for the AI tutor. */
 export type AiProviderType =
-  | 'built_in'
   | 'gemini_byok'
   | 'openrouter_byok'
   | 'local_model'
@@ -25,7 +24,7 @@ export type AiProviderConfig = {
   type: AiProviderType;
   displayName: string;
   enabled: boolean;
-  /** Underlying model id, e.g. "gemini-2.5-flash-lite". Optional for built-in. */
+  /** Underlying model id, e.g. "gemini-2.5-flash-lite". */
   model?: string;
   apiKeyStorage?: ApiKeyStorage;
   /** User-provided key. Local-device only for MVP. */

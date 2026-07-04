@@ -132,6 +132,13 @@ npm run generate -- --input inputs/example-course
 #    add --preview to ALSO write output/<course-id>.preview.md (human-readable only)
 npm run generate -- --input inputs/example-course --preview
 
+# 2b. Generate 5 lesson-package VARIANTS from the same input (detail × guidance)
+npm run generate:variants -- --input inputs/example-course
+#     add --preview to also write per-variant preview markdown
+npm run generate:variants -- --input inputs/example-course --preview
+#     generate just one variant
+npm run generate:variant  -- --input inputs/example-course --variant high_guided
+
 # 3. Validate an existing course against the app's CoursePackage schema
 npm run validate -- --file output/example-course.final.json
 
@@ -166,6 +173,57 @@ COURSE_FACTORY_API_KEY=sk-...
 
 npm run generate -- --input inputs/my-course
 ```
+
+## Lesson-package variants (detail × guidance)
+
+`generate:variants` builds **one** base CoursePackage from the input (the normal
+pipeline), then deterministically shapes it into **5 variants** that differ on
+exactly two axes — nothing about RAG, runtime strategy, provider, or schema:
+
+| Variant | Lesson detail | Tutor guidance | KB/unit | Q/unit | Mistakes/unit |
+| --- | --- | --- | --- | --- | --- |
+| `minimal_free` | low | low | 2 | 1 | 1 |
+| `medium_free` | medium | low | 2–4 | 1–2 | 1–2 |
+| `medium_guided` | medium | medium | 3–4 | 2 | 2 |
+| `high_guided` | high | high | 4–6 | 2–3 | 3 |
+| `high_very_guided` | high | very high | 4–6 | 2–3 | 3–4 |
+
+- **Detail axis** — content volume per unit. Low-detail variants trim the base;
+  high-detail variants add MORE support for the *same* topic (orientation/recap
+  chunks from the unit goal, worked-contrast chunks from the unit's own common
+  mistakes, extra progressive hints, a mastery-check question, guard mistakes
+  derived from the unit's do-not-teach constraints). Never new topics.
+- **Guidance axis** — how explicit the `teacherBrain` is, using existing schema
+  fields only (`guidelines` / `constraints` / `systemPromptSeed`). `free` gives a
+  2-line seed and lets the tutor teach naturally; `very_guided` encodes a strict
+  ordered 8-step flow with correction/redirect/advancement rules.
+
+Each variant is schema-validated **and** checked against its own gate; a variant
+that fails is written but clearly marked `failed` (tag `variant-gate-failed`) —
+never shipped silently. Outputs land under `output/variants/<course-id>/`:
+
+```
+minimal_free.final.json  medium_free.final.json  medium_guided.final.json
+high_guided.final.json   high_very_guided.final.json
+variant-manifest.json    variant-generation-report.json   variant-generation-report.md
+previews/*.preview.md         (only with --preview)
+```
+
+Each variant JSON self-identifies via `metadata.tags` (`lesson-variant` +
+slug) and the schema-tolerated keys `metadata.variantId` /
+`metadata.lessonDetailLevel` / `metadata.tutorGuidanceLevel`.
+
+This step does **not** evaluate teaching quality and makes no claim about which
+variant is best — that is Teacher Harness's job. The variant files are exactly
+the CoursePackage JSON that Teacher Harness scenarios point at, so the intended
+next step is to run all 5 through the harness against the chosen local/offline
+models and compare.
+
+> With the offline `--mock` provider the base is thin placeholder content, so
+> high-detail variants are enriched from that thin base (and, e.g.,
+> `high_very_guided` may reach 3 rather than 4 mistakes when the base has no
+> do-not-teach constraints to derive guard mistakes from — it will not pad with
+> duplicates). A real provider (or a richer base) yields fuller variants.
 
 ## How generation works — two independent gates
 

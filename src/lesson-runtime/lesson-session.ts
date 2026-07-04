@@ -93,9 +93,16 @@ export async function runLessonTurn(params: {
   studentAnswer: string;
   tutorProvider: TutorProvider;
   strategy?: TutorRuntimeStrategy;
+  /** When false, the lesson can never complete (the tutor never finishes it). */
+  allowCompletion?: boolean;
+  /** Short-term memory window (recent messages) sent to the model. Default 5; local path uses 8. */
+  recentMessagesLimit?: number;
+  /** Optional personalization instruction (style only), appended to the selected prompt. */
+  teachingPreferenceInstruction?: string;
 }): Promise<RunLessonTurnResult> {
   const { unit, tutorProvider } = params;
   const strategy = params.strategy ?? DEFAULT_TUTOR_STRATEGY;
+  const allowCompletion = params.allowCompletion ?? true;
   const studentAnswer = params.studentAnswer.trim();
 
   const steps = buildLessonSteps(unit);
@@ -115,7 +122,15 @@ export async function runLessonTurn(params: {
     messages: [...params.state.messages, { role: 'student', content: studentAnswer }],
   };
 
-  let input = toTutorInput({ unit, step, state: preState, studentAnswer });
+  let input = toTutorInput({
+    unit,
+    step,
+    state: preState,
+    studentAnswer,
+    allowCompletion,
+    recentMessagesLimit: params.recentMessagesLimit,
+    teachingPreferenceInstruction: params.teachingPreferenceInstruction,
+  });
 
   // retrieval_first — the RUNTIME retrieves allowed unit snippets (deterministic
   // keyword match over the CoursePackage; the model never searches on its own).
@@ -184,6 +199,6 @@ export async function runLessonTurn(params: {
     messages: [...preState.messages, { role: 'tutor', content: response.messageToStudent }],
   };
 
-  const state = applyTutorAction({ state: withTutorMessage, response });
+  const state = applyTutorAction({ state: withTutorMessage, response, allowCompletion });
   return { state, response, strategy, guard, revised };
 }

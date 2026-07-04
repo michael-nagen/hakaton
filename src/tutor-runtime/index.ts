@@ -7,5 +7,6 @@ export * from './run-tutor-turn.types';
 export * from './run-tutor-turn';
 export * from './tutor-provider.types';
 export * from './parse-tutor-response';
+export * from './live-tutor-prompt-style';
 export * from './build-tutor-response-prompt';
 export * from './create-tutor-provider';

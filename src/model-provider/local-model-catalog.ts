@@ -108,8 +108,20 @@ export function getLocalModelById(params: { id: string }): LocalModelConfig | un
   return LOCAL_MODEL_CATALOG.find((m) => m.id === params.id);
 }
 
-/** The default/lightest model id offered first. */
-export const DEFAULT_LOCAL_MODEL_ID = LOCAL_MODEL_CATALOG[0]?.id ?? '';
+/**
+ * The default on-device model id.
+ *
+ * LOCKED DEFAULT (2026-07-02): evaluation on the local WebLLM path found
+ * Llama 3.2 3B the best-performing local tutor model, so it is the default the
+ * local provider uses when a session does not name one — NOT the lightest
+ * (Gemma) entry. The catalog ORDER is unchanged (the UI still lists models
+ * lightest-first); only the default the offline runtime resolves to changed.
+ * This constant is read only by the local provider, never by the setup UI.
+ * The full locked local-device setup lives in
+ * src/lesson-runtime/local-tutor-defaults.ts.
+ */
+export const DEFAULT_LOCAL_MODEL_ID =
+  LOCAL_MODEL_CATALOG.find((m) => m.id === 'llama-better-offline')?.id ?? LOCAL_MODEL_CATALOG[0]?.id ?? '';
 
 /** Short human label for an install status, for status badges/cards. */
 export function localInstallStatusLabel(status: LocalModelInstallStatus): string {

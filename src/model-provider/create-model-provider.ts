@@ -7,7 +7,6 @@
 
 import type { AiProviderConfig } from './ai-provider-config.types';
 import type { ModelProvider } from './model-provider.types';
-import { mockModelProvider } from './mock-model.provider';
 import { createGeminiProvider, DEFAULT_GEMINI_MODEL } from './gemini-model.provider';
 import { createOpenRouterProvider, DEFAULT_OPENROUTER_FREE_MODEL } from './openrouter-model.provider';
 import { createLocalModelProvider } from './local-model.provider';
@@ -21,10 +20,6 @@ import { createCustomProvider } from './custom-model.provider';
 export function createModelProviderFromConfig(params: { config: AiProviderConfig }): ModelProvider {
   const { config } = params;
   switch (config.type) {
-    case 'built_in':
-      // Mock stands in for our own backend until a real built-in plan exists.
-      return mockModelProvider;
-
     case 'gemini_byok': {
       if (!config.apiKey) throw new Error('Gemini provider selected but no API key is configured.');
       return createGeminiProvider({ apiKey: config.apiKey, model: config.model ?? DEFAULT_GEMINI_MODEL });

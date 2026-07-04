@@ -17,6 +17,11 @@
 // in real syntax is caught, but a model that describes a future concept in
 // prose without syntax is not penalised. Good enough for the MVP.
 
+// Generic teaching-behavior detectors (stuck/hint/close-enough/wrong/correct)
+// live in their own module and are merged into the registry below, so scoreTurn
+// resolves those labels with no change to the scorer.
+import { TUTOR_BEHAVIOR_RULES } from './tutor-behavior-rules';
+
 export interface ScoringContext {
   /** Raw tutor reply. */
   reply: string;
@@ -145,6 +150,12 @@ export const BEHAVIOR_RULES: Readonly<Record<string, BehaviorRule>> = {
   teaches_star_repeat: { presenceIsGood: false, detect: (c) => CONCRETE_STAR.test(c.reply) },
   teaches_then_catch_syntax: { presenceIsGood: false, detect: (c) => CONCRETE_THEN_CATCH.test(c.reply) },
   teaches_future_topic: { presenceIsGood: false, detect: teachesAnyFutureSyntax },
+
+  // Generic teaching-behavior labels (question count, hint-vs-answer,
+  // stuck-handling, close-enough acceptance, gentle correction). See
+  // ./tutor-behavior-rules.ts. Fuzzy ones are lenient here and owned by the
+  // optional LLM judge.
+  ...TUTOR_BEHAVIOR_RULES,
 };
 
 // ── Generic heuristics used for the numeric/flag scores ──────────────

@@ -11,6 +11,9 @@ import type {
   CourseLevel,
   CourseMetadata,
   CoursePackage,
+  DeterministicOpenCheck,
+  DeterministicStep,
+  DeterministicStepMcq,
   Hint,
   KnowledgeBaseChunk,
   LearningUnit,
@@ -156,6 +159,50 @@ function validateCommonMistake(v: Validator, value: unknown, path: string): void
   if (m.relatedQuestionId !== undefined) v.isString(m.relatedQuestionId, `${path}.relatedQuestionId`);
 }
 
+function validateDeterministicMcq(v: Validator, value: unknown, path: string): void {
+  if (!v.isObject(value, path)) return;
+  const m = value as Partial<DeterministicStepMcq>;
+  v.isString(m.question, `${path}.question`);
+  if (v.isStringArray(m.options, `${path}.options`)) {
+    if ((m.options as string[]).length < 2) v.errors.push(`${path}.options: needs at least 2 options`);
+    if (v.isString(m.correctAnswer, `${path}.correctAnswer`) && !(m.options as string[]).includes(m.correctAnswer as string)) {
+      v.errors.push(`${path}.correctAnswer: must be one of options`);
+    }
+  } else {
+    // options invalid → still surface a correctAnswer problem if it is missing.
+    v.isString(m.correctAnswer, `${path}.correctAnswer`);
+  }
+  v.isString(m.feedbackCorrect, `${path}.feedbackCorrect`);
+  v.isString(m.feedbackIncorrect, `${path}.feedbackIncorrect`);
+}
+
+function validateDeterministicOpenCheck(v: Validator, value: unknown, path: string): void {
+  if (!v.isObject(value, path)) return;
+  const o = value as Partial<DeterministicOpenCheck>;
+  v.isString(o.question, `${path}.question`);
+  v.isString(o.expectedIdea, `${path}.expectedIdea`);
+  v.isString(o.hint, `${path}.hint`);
+  if (o.acceptableAnswers !== undefined) v.isStringArray(o.acceptableAnswers, `${path}.acceptableAnswers`);
+}
+
+function validateDeterministicStep(v: Validator, value: unknown, path: string): void {
+  if (!v.isObject(value, path)) return;
+  const s = value as Partial<DeterministicStep>;
+  v.isString(s.id, `${path}.id`);
+  v.isString(s.title, `${path}.title`);
+  v.isString(s.intro, `${path}.intro`);
+  if (s.example !== undefined) v.isString(s.example, `${path}.example`);
+  // A step ends in EITHER an MCQ or an open check — validate whichever is
+  // present, and require exactly one.
+  if (s.mcq !== undefined) validateDeterministicMcq(v, s.mcq, `${path}.mcq`);
+  if (s.open !== undefined) validateDeterministicOpenCheck(v, s.open, `${path}.open`);
+  if (s.mcq === undefined && s.open === undefined) {
+    v.errors.push(`${path}: needs either an "mcq" or an "open" check`);
+  }
+  v.isString(s.checkpointPrompt, `${path}.checkpointPrompt`);
+  if (s.summary !== undefined) v.isString(s.summary, `${path}.summary`);
+}
+
 function validateUnit(v: Validator, value: unknown, path: string): void {
   if (!v.isObject(value, path)) return;
   const u = value as Partial<LearningUnit>;
@@ -176,6 +223,14 @@ function validateUnit(v: Validator, value: unknown, path: string): void {
   if (v.isArray(u.commonMistakes, `${path}.commonMistakes`)) {
     (u.commonMistakes as unknown[]).forEach((m, i) =>
       validateCommonMistake(v, m, `${path}.commonMistakes[${i}]`),
+    );
+  }
+  if (u.deterministicOverview !== undefined) v.isString(u.deterministicOverview, `${path}.deterministicOverview`);
+  // Optional + additive: only validated when the unit opts into the
+  // deterministic flow. Absent → legacy unit, nothing to check.
+  if (u.deterministicSteps !== undefined && v.isArray(u.deterministicSteps, `${path}.deterministicSteps`)) {
+    (u.deterministicSteps as unknown[]).forEach((s, i) =>
+      validateDeterministicStep(v, s, `${path}.deterministicSteps[${i}]`),
     );
   }
 }

@@ -12,10 +12,22 @@ import { loadCourseProgress } from '../../lesson-runtime';
 
 const SURFACE: React.CSSProperties = {
   background: 'var(--bg-surface)',
-  border: '1px solid var(--maestro-ink-3)',
+  border: '1px solid var(--border-1)',
   borderRadius: 'var(--radius-l)',
   padding: 20,
 };
+
+// Full-viewport dark page wrapper, matching the rest of the product (AppShell,
+// AI setup) so the catalog shares the same background as the app.
+function DarkPage({ children }: { children: React.ReactNode }) {
+  return (
+    <div data-theme="dark" style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--fg-1)', fontFamily: 'var(--font-text)' }}>
+      <div style={{ width: '100%', maxWidth: 980, margin: '0 auto', padding: 'clamp(20px,4vw,40px) clamp(16px,4vw,48px) 96px' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 const LABEL: React.CSSProperties = {
   fontFamily: 'var(--font-mono)',
@@ -31,7 +43,7 @@ const PILL: React.CSSProperties = {
   lineHeight: '18px',
   padding: '0 8px',
   borderRadius: 'var(--radius-xs)',
-  background: 'var(--maestro-ink-3)',
+  background: 'var(--bg-chip)',
   color: 'var(--fg-3)',
 };
 
@@ -41,7 +53,7 @@ export function CourseCatalogPage() {
   const courses = useMemo(() => getPrebuiltCourses(), []);
 
   return (
-    <div style={{ width: '100%', maxWidth: 980, margin: '0 auto', padding: 'clamp(20px,4vw,40px) clamp(16px,4vw,48px) 96px' }}>
+    <DarkPage>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
         <button
           type="button"
@@ -63,7 +75,7 @@ export function CourseCatalogPage() {
         Learn with an <em>AI tutor</em>
       </h1>
       <p style={{ fontFamily: 'var(--font-text)', fontSize: 14, lineHeight: 1.55, color: 'var(--fg-3)', margin: '0 0 24px', maxWidth: 620 }}>
-        Prebuilt courses, each taught one lesson at a time by the AI provider you chose in AI setup. Pick a course to see its lessons.
+        Each course is taught one short lesson at a time by the AI provider you chose in AI setup. Pick a course to see its lessons.
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
@@ -92,6 +104,6 @@ export function CourseCatalogPage() {
           );
         })}
       </div>
-    </div>
+    </DarkPage>
   );
 }

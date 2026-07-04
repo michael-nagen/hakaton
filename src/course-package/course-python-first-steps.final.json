@@ -1,0 +1,974 @@
+{
+  "id": "course-python-first-steps",
+  "title": "Python First Steps",
+  "description": "A very-guided beginner course: printing text, printing numbers, storing text in a variable, and changing a variable — one tiny concrete step at a time.",
+  "goal": "Take a total beginner from print(\"Hello\") to changing a variable, in tiny guided steps.",
+  "version": "1.0.0",
+  "units": [
+    {
+      "id": "py-first-unit-1-print-text",
+      "title": "Printing Text with print()",
+      "order": 1,
+      "goal": "Use print() to show a piece of text on the screen.",
+      "teacherBrain": {
+        "persona": "A friendly Python instructor who teaches absolute beginners with tiny concrete steps and everyday examples.",
+        "tone": "Encouraging, patient, concrete, jargon-light.",
+        "objectives": [
+          "Understand that print() shows output on the screen.",
+          "Use quotes to print a piece of text with print().",
+          "Predict what a print() line will show on screen."
+        ],
+        "guidelines": [
+          "Step 1: Show the example print(\"Hello\") exactly, and say what it does in one short sentence.",
+          "Step 2: Read it aloud in plain words (e.g. \"print the word Hello\").",
+          "Step 3: Ask the learner to try one tiny variation themselves.",
+          "Step 4: If the learner is close enough, ACCEPT it, gently clean up the wording, and continue — do not nitpick.",
+          "Step 5: If the learner says \"I don't know\" or is stuck, STOP asking open-ended questions: give a short DIRECT explanation with one concrete example (print(\"Hello\")), then ask one very easy check question.",
+          "Step 6: Correct any listed common mistake right away, and do not advance until the learner answers the mastery check."
+        ],
+        "constraints": [
+          "Assume earlier units in this course are done.",
+          "Teach ONLY this step; do not jump ahead to later topics.",
+          "Redirect off-topic or future-topic questions and say they come later.",
+          "Do not suggest advancing while a listed common mistake is unresolved."
+        ],
+        "systemPromptSeed": "You are teaching this beginner Python step. Follow the flow in order: 1) show print(\"Hello\"), 2) explain briefly, 3) let the learner try, 4) accept close answers and tidy the wording, 5) if the learner is stuck give a direct explanation plus the example print(\"Hello\"), 6) check mastery. Advance only once the learner can write print(\"Hello\") and say it shows Hello and avoids the listed mistakes. Redirect any off-topic or later-topic question and say it comes later. If a common mistake appears, correct it before advancing."
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "py-first-unit-1-print-text-kb-1",
+          "unitId": "py-first-unit-1-print-text",
+          "title": "print() shows things on screen",
+          "content": "print() displays whatever you put inside its parentheses. Running print(\"Hello\") shows: Hello.",
+          "tags": [
+            "print",
+            "output",
+            "text"
+          ],
+          "source": "course-author"
+        },
+        {
+          "id": "py-first-unit-1-print-text-kb-2",
+          "unitId": "py-first-unit-1-print-text",
+          "title": "Text goes inside quotes",
+          "content": "A piece of text (called a string) must be inside quotes. print(\"Hi\") shows Hi. The quotes themselves are NOT shown on screen.",
+          "tags": [
+            "string",
+            "quotes",
+            "text"
+          ],
+          "source": "course-author"
+        },
+        {
+          "id": "py-first-unit-1-print-text-kb-3",
+          "unitId": "py-first-unit-1-print-text",
+          "title": "The parentheses are required",
+          "content": "You must wrap the value in parentheses ( ). print(\"Hello\") works. print \"Hello\" (no parentheses) is an error.",
+          "tags": [
+            "syntax",
+            "parentheses"
+          ],
+          "source": "course-author"
+        },
+        {
+          "id": "py-first-unit-1-print-text-kb-4",
+          "unitId": "py-first-unit-1-print-text",
+          "title": "Worked examples",
+          "content": "print(\"Hello\") shows Hello. print(\"I like Python\") shows I like Python. Whatever is inside the quotes is what appears.",
+          "tags": [
+            "example",
+            "print"
+          ],
+          "source": "course-author"
+        }
+      ],
+      "questions": [
+        {
+          "id": "py-first-unit-1-print-text-q-1",
+          "prompt": "What does print(\"Hi\") show on screen?",
+          "type": "mcq",
+          "answer": "Hi",
+          "hints": [
+            {
+              "id": "py-first-unit-1-print-text-q-1-h-1",
+              "order": 1,
+              "text": "The quotes are not printed."
+            },
+            {
+              "id": "py-first-unit-1-print-text-q-1-h-2",
+              "order": 2,
+              "text": "Only what is inside the quotes appears."
+            },
+            {
+              "id": "py-first-unit-1-print-text-q-1-h-3",
+              "order": 3,
+              "text": "It shows the two letters H and i."
+            }
+          ],
+          "difficulty": "beginner",
+          "options": [
+            "Hi",
+            "\"Hi\"",
+            "print Hi"
+          ]
+        },
+        {
+          "id": "py-first-unit-1-print-text-q-2",
+          "prompt": "Write one line that prints the word Cat.",
+          "type": "short",
+          "answer": "print(\"Cat\")",
+          "hints": [
+            {
+              "id": "py-first-unit-1-print-text-q-2-h-1",
+              "order": 1,
+              "text": "Use print( )."
+            },
+            {
+              "id": "py-first-unit-1-print-text-q-2-h-2",
+              "order": 2,
+              "text": "Put the text in quotes."
+            },
+            {
+              "id": "py-first-unit-1-print-text-q-2-h-3",
+              "order": 3,
+              "text": "It looks like print(\"Cat\")."
+            }
+          ],
+          "difficulty": "beginner"
+        },
+        {
+          "id": "py-first-unit-1-print-text-q-3-mastery",
+          "prompt": "Mastery check: what appears when you run print(\"Bye\")?",
+          "type": "short",
+          "answer": "Bye (without the quotes)",
+          "hints": [
+            {
+              "id": "py-first-unit-1-print-text-q-3-mastery-h-1",
+              "order": 1,
+              "text": "Only what is inside the quotes shows."
+            },
+            {
+              "id": "py-first-unit-1-print-text-q-3-mastery-h-2",
+              "order": 2,
+              "text": "The quotes are not shown."
+            },
+            {
+              "id": "py-first-unit-1-print-text-q-3-mastery-h-3",
+              "order": 3,
+              "text": "The screen shows Bye."
+            }
+          ],
+          "difficulty": "beginner"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "py-first-unit-1-print-text-cm-1",
+          "mistake": "Forgetting the quotes around text, e.g. print(Hello).",
+          "correction": "Text needs quotes: write print(\"Hello\"). Without quotes Python thinks Hello is a name it does not know.",
+          "relatedQuestionId": "py-first-unit-1-print-text-q-2"
+        },
+        {
+          "id": "py-first-unit-1-print-text-cm-2",
+          "mistake": "Forgetting the parentheses, e.g. print \"Hello\".",
+          "correction": "print needs parentheses: print(\"Hello\")."
+        },
+        {
+          "id": "py-first-unit-1-print-text-cm-3",
+          "mistake": "Thinking the quotes are printed too.",
+          "correction": "The quotes are not shown. print(\"Hi\") shows Hi, not \"Hi\"."
+        }
+      ],
+      "deterministicSteps": [
+        {
+          "id": "py-first-unit-1-print-text-step-1",
+          "title": "Step 1: Output — showing things on screen",
+          "intro": "Everything useful a program does eventually needs to be shown to a person — a result, a message, a warning. That's called output. In Python, print() is the main way to produce output: it takes whatever you give it and displays it on the screen. You'll use it constantly, from your very first program onward, to check results and talk to the user.\n\nA common beginner surprise: nothing appears unless you actually call print — just writing a value on its own doesn't display it.",
+          "example": "print(\"Welcome!\")\n# shows: Welcome!",
+          "open": {
+            "question": "In your own words: what does print() do, and why would a program need it? A short answer is fine.",
+            "expectedIdea": "print() displays/outputs information (text or values) on the screen so a person can see it; programs need output to communicate results or messages.",
+            "acceptableAnswers": [
+              "It shows text on the screen",
+              "It displays output/results so the user can see them",
+              "It prints messages to the screen so people know what happened"
+            ],
+            "hint": "print() shows information on the screen. Programs need it so they can tell the user something — a result, a message, or a check of what happened."
+          },
+          "checkpointPrompt": "If that makes sense, we can continue — or say \"another example\" if you'd like one more.",
+          "summary": "print() produces output — it shows information on the screen."
+        },
+        {
+          "id": "py-first-unit-1-print-text-step-2",
+          "title": "Step 2: Text and quotes",
+          "intro": "When the thing you want to show is text, Python needs to know where that text begins and ends — so you wrap it in quotes. Text inside quotes is called a string. This matters because without quotes Python thinks you are naming something and gives an error.\n\nThe quotes are just boundary markers: they tell Python \"treat these characters as text,\" and they are not shown on screen themselves. A frequent mix-up is expecting the quotes to appear too — they do not.",
+          "example": "print(\"Cat\")\n# shows: Cat   (the quotes are not shown)",
+          "mcq": {
+            "question": "When you print a string, what happens to the quotation marks around it?",
+            "options": [
+              "They are not shown — only the text inside appears",
+              "They are printed along with the text",
+              "They turn into spaces"
+            ],
+            "correctAnswer": "They are not shown — only the text inside appears",
+            "feedbackCorrect": "Right — quotes just mark where text starts and ends. print(\"Cat\") shows Cat, without quotes.",
+            "feedbackIncorrect": "The quotes are only markers — they are not shown. print(\"Cat\") displays Cat, not \"Cat\"."
+          },
+          "checkpointPrompt": "Make sense? If so we'll keep going.",
+          "summary": "Text goes in quotes; the quotes mark the text but are not printed."
+        },
+        {
+          "id": "py-first-unit-1-print-text-step-3",
+          "title": "Step 3: Reading a print line",
+          "intro": "Now let's put it together and read a print line the way Python does. The trick is simple: look inside the parentheses, and whatever text sits inside the quotes is exactly what appears — nothing more, nothing less.\n\nThis skill lets you predict a program's output before you even run it, which is how you check your own code. A common confusion is thinking the word print or the parentheses show up on screen — they don't; only the quoted text does.",
+          "example": "print(\"I like Python\")\n# shows: I like Python",
+          "mcq": {
+            "question": "To predict what a print line shows, what should you focus on?",
+            "options": [
+              "The text inside the quotes",
+              "The word print",
+              "The number of parentheses"
+            ],
+            "correctAnswer": "The text inside the quotes",
+            "feedbackCorrect": "Exactly — only the text inside the quotes appears. So print(\"I like Python\") shows I like Python.",
+            "feedbackIncorrect": "Focus on the text inside the quotes — that is what appears. print(\"I like Python\") shows I like Python."
+          },
+          "checkpointPrompt": "If that makes sense, you've reached the end of the lesson — ready to wrap up?",
+          "summary": "To read a print line, focus on the text inside the quotes — that is the output."
+        }
+      ],
+      "deterministicOverview": "Welcome! In this lesson we'll learn how print() lets a Python program show information on the screen.\n\nWe'll go through three ideas: (1) what \"output\" is and why programs need it, (2) how text works with quotes, and (3) how to read a print(...) line and predict exactly what appears.\n\nBy the end you'll be able to look at a simple print line and say what it shows. Let's start with the first idea."
+    },
+    {
+      "id": "py-first-unit-2-print-number",
+      "title": "Printing Numbers",
+      "order": 2,
+      "goal": "Use print() to show a number on the screen.",
+      "teacherBrain": {
+        "persona": "A friendly Python instructor who teaches absolute beginners with tiny concrete steps and everyday examples.",
+        "tone": "Encouraging, patient, concrete, jargon-light.",
+        "objectives": [
+          "Print a number directly with print() (no quotes needed).",
+          "Tell the difference between numbers and text.",
+          "Print the result of a simple calculation."
+        ],
+        "guidelines": [
+          "Step 1: Show the example print(5) exactly, and say what it does in one short sentence.",
+          "Step 2: Read it aloud in plain words (e.g. \"print the number 5\").",
+          "Step 3: Ask the learner to try one tiny variation themselves.",
+          "Step 4: If the learner is close enough, ACCEPT it, gently clean up the wording, and continue — do not nitpick.",
+          "Step 5: If the learner says \"I don't know\" or is stuck, STOP asking open-ended questions: give a short DIRECT explanation with one concrete example (print(5)), then ask one very easy check question.",
+          "Step 6: Correct any listed common mistake right away, and do not advance until the learner answers the mastery check."
+        ],
+        "constraints": [
+          "Assume earlier units in this course are done.",
+          "Teach ONLY this step; do not jump ahead to later topics.",
+          "Redirect off-topic or future-topic questions and say they come later.",
+          "Do not suggest advancing while a listed common mistake is unresolved."
+        ],
+        "systemPromptSeed": "You are teaching this beginner Python step. Follow the flow in order: 1) show print(5), 2) explain briefly, 3) let the learner try, 4) accept close answers and tidy the wording, 5) if the learner is stuck give a direct explanation plus the example print(5), 6) check mastery. Advance only once the learner can write print(5) and say numbers need no quotes and avoids the listed mistakes. Redirect any off-topic or later-topic question and say it comes later. If a common mistake appears, correct it before advancing."
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "py-first-unit-2-print-number-kb-1",
+          "unitId": "py-first-unit-2-print-number",
+          "title": "Numbers do not need quotes",
+          "content": "A number is written without quotes. print(5) shows 5. print(42) shows 42.",
+          "tags": [
+            "number",
+            "print"
+          ],
+          "source": "course-author"
+        },
+        {
+          "id": "py-first-unit-2-print-number-kb-2",
+          "unitId": "py-first-unit-2-print-number",
+          "title": "Text vs numbers",
+          "content": "print(\"5\") and print(5) both show 5 on screen, but \"5\" is text and 5 is a number. For now, print numbers without quotes.",
+          "tags": [
+            "number",
+            "string",
+            "difference"
+          ],
+          "source": "course-author"
+        },
+        {
+          "id": "py-first-unit-2-print-number-kb-3",
+          "unitId": "py-first-unit-2-print-number",
+          "title": "Parentheses still required",
+          "content": "Like with text, the number goes inside parentheses: print(5) works, print 5 is an error.",
+          "tags": [
+            "syntax",
+            "parentheses"
+          ],
+          "source": "course-author"
+        },
+        {
+          "id": "py-first-unit-2-print-number-kb-4",
+          "unitId": "py-first-unit-2-print-number",
+          "title": "Worked examples",
+          "content": "print(0) shows 0. print(100) shows 100. The number inside the parentheses is what appears.",
+          "tags": [
+            "example",
+            "number"
+          ],
+          "source": "course-author"
+        }
+      ],
+      "questions": [
+        {
+          "id": "py-first-unit-2-print-number-q-1",
+          "prompt": "What does print(7) show?",
+          "type": "mcq",
+          "answer": "7",
+          "hints": [
+            {
+              "id": "py-first-unit-2-print-number-q-1-h-1",
+              "order": 1,
+              "text": "Numbers print as themselves."
+            },
+            {
+              "id": "py-first-unit-2-print-number-q-1-h-2",
+              "order": 2,
+              "text": "No quotes are involved."
+            },
+            {
+              "id": "py-first-unit-2-print-number-q-1-h-3",
+              "order": 3,
+              "text": "The screen shows 7."
+            }
+          ],
+          "difficulty": "beginner",
+          "options": [
+            "7",
+            "\"7\"",
+            "seven"
+          ]
+        },
+        {
+          "id": "py-first-unit-2-print-number-q-2",
+          "prompt": "Write one line that prints the number 100.",
+          "type": "short",
+          "answer": "print(100)",
+          "hints": [
+            {
+              "id": "py-first-unit-2-print-number-q-2-h-1",
+              "order": 1,
+              "text": "Use print( )."
+            },
+            {
+              "id": "py-first-unit-2-print-number-q-2-h-2",
+              "order": 2,
+              "text": "A number needs no quotes."
+            },
+            {
+              "id": "py-first-unit-2-print-number-q-2-h-3",
+              "order": 3,
+              "text": "It looks like print(100)."
+            }
+          ],
+          "difficulty": "beginner"
+        },
+        {
+          "id": "py-first-unit-2-print-number-q-3-mastery",
+          "prompt": "Mastery check: in print(5), does the number 5 need quotes? Show the line.",
+          "type": "short",
+          "answer": "No — numbers do not need quotes: print(5).",
+          "hints": [
+            {
+              "id": "py-first-unit-2-print-number-q-3-mastery-h-1",
+              "order": 1,
+              "text": "Numbers differ from text."
+            },
+            {
+              "id": "py-first-unit-2-print-number-q-3-mastery-h-2",
+              "order": 2,
+              "text": "Quotes are only for text."
+            },
+            {
+              "id": "py-first-unit-2-print-number-q-3-mastery-h-3",
+              "order": 3,
+              "text": "Write print(5)."
+            }
+          ],
+          "difficulty": "beginner"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "py-first-unit-2-print-number-cm-1",
+          "mistake": "Adding quotes around a number out of habit, e.g. print(\"5\").",
+          "correction": "It still shows 5, but now it is text, not a number. To print a number, write print(5).",
+          "relatedQuestionId": "py-first-unit-2-print-number-q-3-mastery"
+        },
+        {
+          "id": "py-first-unit-2-print-number-cm-2",
+          "mistake": "Forgetting the parentheses, e.g. print 5.",
+          "correction": "Use print(5)."
+        },
+        {
+          "id": "py-first-unit-2-print-number-cm-3",
+          "mistake": "Thinking print(5) shows \"5\" with quotes.",
+          "correction": "It shows 5, with no quotes."
+        }
+      ],
+      "deterministicSteps": [
+        {
+          "id": "py-first-unit-2-print-number-step-1",
+          "title": "Step 1: Printing numbers directly",
+          "intro": "Numbers are values Python already understands, so you can hand them straight to print() with no quotes. This is handy any time your program computes something — a count, a total, an age — and needs to show it.\n\nYou still need the parentheses, just like with text. A common beginner habit is adding quotes out of reflex; that works visually but quietly turns a number into text, which we will look at next.",
+          "example": "print(42)\n# shows: 42",
+          "mcq": {
+            "question": "How do you give a whole number to print()?",
+            "options": [
+              "Directly, with no quotes",
+              "Always wrapped in quotes",
+              "Only after turning it into a word"
+            ],
+            "correctAnswer": "Directly, with no quotes",
+            "feedbackCorrect": "Right — numbers need no quotes. print(42) shows 42.",
+            "feedbackIncorrect": "Numbers go in directly, without quotes: print(42) shows 42."
+          },
+          "checkpointPrompt": "Good so far? Let's continue.",
+          "summary": "Numbers can be printed directly, without quotes."
+        },
+        {
+          "id": "py-first-unit-2-print-number-step-2",
+          "title": "Step 2: Numbers vs. text",
+          "intro": "Here's a subtle but important idea: print(3) and print(\"3\") both put a 3 on screen, yet they are different things. 3 is a real number Python can do math with; \"3\" is just the character three, treated as text.\n\nIt matters the moment you calculate — you can add numbers but not text. A common confusion is assuming they are the same because they look alike on screen.",
+          "example": "print(3)     # the number three\nprint(\"3\")   # the text \"3\" — looks the same, but it is text",
+          "mcq": {
+            "question": "print(3) and print(\"3\") look the same on screen. What is the real difference?",
+            "options": [
+              "3 is a number Python can compute with; \"3\" is text",
+              "There is no difference at all",
+              "\"3\" is larger than 3"
+            ],
+            "correctAnswer": "3 is a number Python can compute with; \"3\" is text",
+            "feedbackCorrect": "Exactly — same look, different type. 3 is a number; \"3\" is text you cannot do math with.",
+            "feedbackIncorrect": "They look identical but differ in type: 3 is a number (you can do math with it), \"3\" is text."
+          },
+          "checkpointPrompt": "Clear? On to the last idea.",
+          "summary": "print(3) is a number; print(\"3\") is text — same look, different type."
+        },
+        {
+          "id": "py-first-unit-2-print-number-step-3",
+          "title": "Step 3: Printing a calculation",
+          "intro": "Because numbers are real values, you can put a calculation inside print() and Python works it out first, then shows the result. This is your first taste of the computer doing something for you rather than just echoing text.\n\nA common surprise: this only happens without quotes — print(\"2 + 3\") would show the characters 2 + 3 as plain text instead.",
+          "example": "print(2 + 3)\n# shows: 5   (Python does the math first)",
+          "open": {
+            "question": "What do you think print(10 + 5) shows on the screen, and why?",
+            "expectedIdea": "It shows 15 because Python evaluates the arithmetic 10 + 5 first (they are numbers), then prints the result.",
+            "acceptableAnswers": [
+              "15",
+              "15, because Python adds them first",
+              "It adds 10 and 5 and shows 15"
+            ],
+            "hint": "Python does the math before printing, so print(10 + 5) shows 15 — the result of adding, not the text \"10 + 5\"."
+          },
+          "checkpointPrompt": "If that makes sense, you've reached the end of the lesson — ready to wrap up?",
+          "summary": "Python evaluates arithmetic inside print(), so print(2 + 3) shows 5."
+        }
+      ],
+      "deterministicOverview": "In this lesson we'll learn how to print numbers with print().\n\nWe'll cover three ideas: (1) printing a number directly, (2) the difference between a number and text in quotes, and (3) letting Python print the result of a simple calculation.\n\nBy the end you'll be able to print numbers and understand how they differ from text. Here's the first idea."
+    },
+    {
+      "id": "py-first-unit-3-store-and-print",
+      "title": "Variables as Simple Names for Values",
+      "order": 3,
+      "goal": "Use a variable as a name that stands for a value.",
+      "teacherBrain": {
+        "persona": "A friendly Python instructor who teaches absolute beginners with tiny concrete steps and everyday examples.",
+        "tone": "Encouraging, patient, concrete, jargon-light.",
+        "objectives": [
+          "Use a variable as a name for a stored value.",
+          "Reuse a value later by its variable name.",
+          "Tell the difference between a variable's name and its value."
+        ],
+        "guidelines": [
+          "Step 1: Show the example name = \"Maya\" then print(name) exactly, and say what it does in one short sentence.",
+          "Step 2: Read it aloud in plain words (e.g. \"the name name now stands for Maya\").",
+          "Step 3: Ask the learner to try one tiny variation themselves.",
+          "Step 4: If the learner is close enough, ACCEPT it, gently clean up the wording, and continue — do not nitpick.",
+          "Step 5: If the learner says \"I don't know\" or is stuck, STOP asking open-ended questions: give a short DIRECT explanation with one concrete example (name = \"Maya\" then print(name)), then ask one very easy check question.",
+          "Step 6: Correct any listed common mistake right away, and do not advance until the learner answers the mastery check."
+        ],
+        "constraints": [
+          "Assume earlier units in this course are done.",
+          "Teach ONLY this step; do not jump ahead to later topics.",
+          "Redirect off-topic or future-topic questions and say they come later.",
+          "Do not suggest advancing while a listed common mistake is unresolved."
+        ],
+        "systemPromptSeed": "You are teaching this beginner Python step. Follow the flow in order: 1) show name = \"Maya\" then print(name), 2) explain briefly, 3) let the learner try, 4) accept close answers and tidy the wording, 5) if the learner is stuck give a direct explanation plus the example name = \"Maya\" then print(name), 6) check mastery. Advance only once the learner can give a value a name with = and use the name to get the value and avoids the listed mistakes. Redirect any off-topic or later-topic question and say it comes later. If a common mistake appears, correct it before advancing."
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "py-first-unit-3-store-and-print-kb-1",
+          "unitId": "py-first-unit-3-store-and-print",
+          "title": "A variable is a name for a value",
+          "content": "name = \"Maya\" gives the text Maya the name `name`. Now `name` stands for Maya — it is just a simple name for that value.",
+          "tags": [
+            "variable",
+            "name",
+            "assignment"
+          ],
+          "source": "course-author"
+        },
+        {
+          "id": "py-first-unit-3-store-and-print-kb-2",
+          "unitId": "py-first-unit-3-store-and-print",
+          "title": "Use the name to get the value",
+          "content": "Wherever you use the name, Python gives you its value. So print(name) shows Maya (the stored value).",
+          "tags": [
+            "variable",
+            "print",
+            "value"
+          ],
+          "source": "course-author"
+        },
+        {
+          "id": "py-first-unit-3-store-and-print-kb-3",
+          "unitId": "py-first-unit-3-store-and-print",
+          "title": "The name is not the word in quotes",
+          "content": "name (no quotes) means the stored value; \"name\" (in quotes) is just the word name. print(name) shows Maya; print(\"name\") shows name.",
+          "tags": [
+            "variable",
+            "quotes"
+          ],
+          "source": "course-author"
+        },
+        {
+          "id": "py-first-unit-3-store-and-print-kb-4",
+          "unitId": "py-first-unit-3-store-and-print",
+          "title": "Worked example",
+          "content": "city = \"Rome\" gives Rome the name city. print(city) shows Rome. The name stands for the value.",
+          "tags": [
+            "example",
+            "variable"
+          ],
+          "source": "course-author"
+        }
+      ],
+      "questions": [
+        {
+          "id": "py-first-unit-3-store-and-print-q-1",
+          "prompt": "After name = \"Maya\", what does print(name) show?",
+          "type": "mcq",
+          "answer": "Maya",
+          "hints": [
+            {
+              "id": "py-first-unit-3-store-and-print-q-1-h-1",
+              "order": 1,
+              "text": "name holds the value Maya."
+            },
+            {
+              "id": "py-first-unit-3-store-and-print-q-1-h-2",
+              "order": 2,
+              "text": "No quotes around name in print."
+            },
+            {
+              "id": "py-first-unit-3-store-and-print-q-1-h-3",
+              "order": 3,
+              "text": "It shows the stored value."
+            }
+          ],
+          "difficulty": "beginner",
+          "options": [
+            "Maya",
+            "name",
+            "\"Maya\""
+          ]
+        },
+        {
+          "id": "py-first-unit-3-store-and-print-q-2",
+          "prompt": "Store the text Sam in a variable called friend, then print it (two lines).",
+          "type": "short",
+          "answer": "friend = \"Sam\" then print(friend)",
+          "hints": [
+            {
+              "id": "py-first-unit-3-store-and-print-q-2-h-1",
+              "order": 1,
+              "text": "First store with = and quotes."
+            },
+            {
+              "id": "py-first-unit-3-store-and-print-q-2-h-2",
+              "order": 2,
+              "text": "Then print the variable name (no quotes)."
+            },
+            {
+              "id": "py-first-unit-3-store-and-print-q-2-h-3",
+              "order": 3,
+              "text": "friend = \"Sam\" then print(friend)."
+            }
+          ],
+          "difficulty": "beginner"
+        },
+        {
+          "id": "py-first-unit-3-store-and-print-q-3-mastery",
+          "prompt": "Mastery check: what is the difference between print(name) and print(\"name\")?",
+          "type": "short",
+          "answer": "print(name) shows the stored value (Maya); print(\"name\") shows the word name.",
+          "hints": [
+            {
+              "id": "py-first-unit-3-store-and-print-q-3-mastery-h-1",
+              "order": 1,
+              "text": "One uses the variable, one is plain text."
+            },
+            {
+              "id": "py-first-unit-3-store-and-print-q-3-mastery-h-2",
+              "order": 2,
+              "text": "Quotes make it literal text."
+            },
+            {
+              "id": "py-first-unit-3-store-and-print-q-3-mastery-h-3",
+              "order": 3,
+              "text": "print(name) → Maya; print(\"name\") → name."
+            }
+          ],
+          "difficulty": "beginner"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "py-first-unit-3-store-and-print-cm-1",
+          "mistake": "Printing the variable name in quotes, e.g. print(\"name\").",
+          "correction": "That shows the word name, not the stored value. Use print(name) with no quotes to show what is stored.",
+          "relatedQuestionId": "py-first-unit-3-store-and-print-q-3-mastery"
+        },
+        {
+          "id": "py-first-unit-3-store-and-print-cm-2",
+          "mistake": "Trying to print before storing, e.g. print(name) with no earlier name = ...",
+          "correction": "Store first (name = \"Maya\"), then print(name)."
+        },
+        {
+          "id": "py-first-unit-3-store-and-print-cm-3",
+          "mistake": "Forgetting quotes when storing text, e.g. name = Maya.",
+          "correction": "Text needs quotes: name = \"Maya\"."
+        }
+      ],
+      "deterministicSteps": [
+        {
+          "id": "py-first-unit-3-store-and-print-step-1",
+          "title": "Step 1: A variable names a value",
+          "intro": "A variable is a name you attach to a value so you can use it later by that name. You create one with =, the name on the left and the value on the right, like score = 0. This matters because programs work with lots of values, and names make code readable and reusable instead of scattering raw values everywhere.\n\nA common beginner confusion is reading = as \"equals\" like in math; here it means \"store this value under this name.\"",
+          "example": "city = \"Rome\"\n# the name city now holds the value Rome",
+          "mcq": {
+            "question": "In Python, what does the = do in  score = 0 ?",
+            "options": [
+              "Stores the value 0 under the name score",
+              "Checks whether score equals 0",
+              "Prints 0 to the screen"
+            ],
+            "correctAnswer": "Stores the value 0 under the name score",
+            "feedbackCorrect": "Right — = stores the value on the right under the name on the left. Now score holds 0.",
+            "feedbackIncorrect": "A single = stores a value: score = 0 puts 0 under the name score (it does not compare or print)."
+          },
+          "checkpointPrompt": "With me so far? Let's continue.",
+          "summary": "A variable is a name for a value; = stores the value under that name."
+        },
+        {
+          "id": "py-first-unit-3-store-and-print-step-2",
+          "title": "Step 2: Reusing a value with its name",
+          "intro": "The real power of a variable is reuse: once a value has a name, you can use that name as many times as you like, and if the value ever changes you only update it in one place. This keeps programs short and avoids mistakes from retyping the same thing.\n\nFor example, if name = \"Sam\", you can greet, thank, and sign off using name without typing \"Sam\" three times. A common beginner habit is repeating the literal value everywhere instead of naming it once.",
+          "example": "name = \"Sam\"\nprint(name)   # Sam\nprint(name)   # Sam again — no retyping",
+          "open": {
+            "question": "Why is it useful to store a value in a variable instead of typing the same value over and over?",
+            "expectedIdea": "Reusing a named value avoids repetition, keeps code readable, and means you only change it in one place if it needs updating.",
+            "acceptableAnswers": [
+              "So you don't repeat yourself",
+              "You can reuse it and change it in one place",
+              "It keeps code shorter and easier to update"
+            ],
+            "hint": "A variable lets you reuse the same value by name and update it in just one place — less typing and fewer mistakes."
+          },
+          "checkpointPrompt": "If that makes sense, we can continue — or say \"another example\" if you'd like one more.",
+          "summary": "Variables let you reuse a value by name and update it in one place."
+        },
+        {
+          "id": "py-first-unit-3-store-and-print-step-3",
+          "title": "Step 3: The name vs. the value",
+          "intro": "It's important to separate a variable's name from the value it holds. Without quotes, a word is treated as a variable and Python gives you its stored value; with quotes, the same word is just literal text.\n\nGetting this right prevents a classic bug where the wrong thing prints. The common confusion is thinking the variable's name is what gets printed — it is the stored value that does.",
+          "example": "fruit = \"apple\"\nprint(fruit)     # shows: apple  (the value)\nprint(\"fruit\")   # shows: fruit  (just the word)",
+          "mcq": {
+            "question": "After  fruit = \"apple\" , what does printing the variable (no quotes) give you?",
+            "options": [
+              "The stored value",
+              "The variable's name as a word",
+              "An error"
+            ],
+            "correctAnswer": "The stored value",
+            "feedbackCorrect": "Right — printing the variable gives its stored value, so print(fruit) shows apple.",
+            "feedbackIncorrect": "Printing the variable (no quotes) gives its stored value: print(fruit) shows apple, while print(\"fruit\") shows the word fruit."
+          },
+          "checkpointPrompt": "If that makes sense, you've reached the end of the lesson — ready to wrap up?",
+          "summary": "A variable's name isn't printed — its stored value is."
+        }
+      ],
+      "deterministicOverview": "This lesson introduces variables — names you give to values so you can reuse them.\n\nWe'll cover three ideas: (1) how a variable stores a value under a name, (2) why reusing a value through its name beats repeating it, and (3) the difference between a variable's name and the value it holds.\n\nBy the end you'll be able to create a variable and use it. Let's begin."
+    },
+    {
+      "id": "py-first-unit-4-change-value",
+      "title": "Changing a Variable Value",
+      "order": 4,
+      "goal": "Change (update) the value in a variable by assigning it again.",
+      "teacherBrain": {
+        "persona": "A friendly Python instructor who teaches absolute beginners with tiny concrete steps and everyday examples.",
+        "tone": "Encouraging, patient, concrete, jargon-light.",
+        "objectives": [
+          "Reassign a variable to give it a new value.",
+          "Know that the latest value wins after reassignment.",
+          "Track a changing value like a score, progress, or lives."
+        ],
+        "guidelines": [
+          "Step 1: Show the example score = 1 then score = 2 exactly, and say what it does in one short sentence.",
+          "Step 2: Read it aloud in plain words (e.g. \"set score to 1, then change it to 2\").",
+          "Step 3: Ask the learner to try one tiny variation themselves.",
+          "Step 4: If the learner is close enough, ACCEPT it, gently clean up the wording, and continue — do not nitpick.",
+          "Step 5: If the learner says \"I don't know\" or is stuck, STOP asking open-ended questions: give a short DIRECT explanation with one concrete example (score = 1 then score = 2), then ask one very easy check question.",
+          "Step 6: Correct any listed common mistake right away, and do not advance until the learner answers the mastery check."
+        ],
+        "constraints": [
+          "Assume earlier units in this course are done.",
+          "Teach ONLY this step; do not jump ahead to later topics.",
+          "Redirect off-topic or future-topic questions and say they come later.",
+          "Do not suggest advancing while a listed common mistake is unresolved."
+        ],
+        "systemPromptSeed": "You are teaching this beginner Python step. Follow the flow in order: 1) show score = 1 then score = 2, 2) explain briefly, 3) let the learner try, 4) accept close answers and tidy the wording, 5) if the learner is stuck give a direct explanation plus the example score = 1 then score = 2, 6) check mastery. Advance only once the learner can reassign a variable and know the latest value wins and avoids the listed mistakes. Redirect any off-topic or later-topic question and say it comes later. If a common mistake appears, correct it before advancing."
+      },
+      "knowledgeBaseChunks": [
+        {
+          "id": "py-first-unit-4-change-value-kb-1",
+          "unitId": "py-first-unit-4-change-value",
+          "title": "Assigning again replaces the value",
+          "content": "score = 1 stores 1. score = 2 then stores 2 in the same variable. Now score is 2 — the old 1 is gone.",
+          "tags": [
+            "reassign",
+            "update",
+            "variable"
+          ],
+          "source": "course-author"
+        },
+        {
+          "id": "py-first-unit-4-change-value-kb-2",
+          "unitId": "py-first-unit-4-change-value",
+          "title": "The latest value wins",
+          "content": "After score = 1 then score = 2, print(score) shows 2, because a variable keeps only its most recent value.",
+          "tags": [
+            "latest",
+            "value",
+            "print"
+          ],
+          "source": "course-author"
+        },
+        {
+          "id": "py-first-unit-4-change-value-kb-3",
+          "unitId": "py-first-unit-4-change-value",
+          "title": "One value at a time",
+          "content": "A variable does not keep a list of old values. It holds exactly one value: the last one you assigned.",
+          "tags": [
+            "single",
+            "value"
+          ],
+          "source": "course-author"
+        },
+        {
+          "id": "py-first-unit-4-change-value-kb-4",
+          "unitId": "py-first-unit-4-change-value",
+          "title": "Worked example",
+          "content": "level = 1 then print(level) shows 1. Then level = 3 then print(level) shows 3. The second assignment replaced the first.",
+          "tags": [
+            "example",
+            "update"
+          ],
+          "source": "course-author"
+        }
+      ],
+      "questions": [
+        {
+          "id": "py-first-unit-4-change-value-q-1",
+          "prompt": "After score = 1 then score = 2, what does print(score) show?",
+          "type": "mcq",
+          "answer": "2",
+          "hints": [
+            {
+              "id": "py-first-unit-4-change-value-q-1-h-1",
+              "order": 1,
+              "text": "The latest value wins."
+            },
+            {
+              "id": "py-first-unit-4-change-value-q-1-h-2",
+              "order": 2,
+              "text": "The old value is replaced."
+            },
+            {
+              "id": "py-first-unit-4-change-value-q-1-h-3",
+              "order": 3,
+              "text": "It shows 2."
+            }
+          ],
+          "difficulty": "beginner",
+          "options": [
+            "2",
+            "1",
+            "3"
+          ]
+        },
+        {
+          "id": "py-first-unit-4-change-value-q-2",
+          "prompt": "Start with level = 1, then change it to 3, then print it (three lines).",
+          "type": "short",
+          "answer": "level = 1 then level = 3 then print(level)  (shows 3)",
+          "hints": [
+            {
+              "id": "py-first-unit-4-change-value-q-2-h-1",
+              "order": 1,
+              "text": "Assign twice; the second wins."
+            },
+            {
+              "id": "py-first-unit-4-change-value-q-2-h-2",
+              "order": 2,
+              "text": "Then print the variable."
+            },
+            {
+              "id": "py-first-unit-4-change-value-q-2-h-3",
+              "order": 3,
+              "text": "level = 1 / level = 3 / print(level)."
+            }
+          ],
+          "difficulty": "beginner"
+        },
+        {
+          "id": "py-first-unit-4-change-value-q-3-mastery",
+          "prompt": "Mastery check: after score = 1 then score = 2, is the old value 1 still stored?",
+          "type": "short",
+          "answer": "No — it was replaced by 2. A variable keeps only its latest value.",
+          "hints": [
+            {
+              "id": "py-first-unit-4-change-value-q-3-mastery-h-1",
+              "order": 1,
+              "text": "Reassigning replaces the value."
+            },
+            {
+              "id": "py-first-unit-4-change-value-q-3-mastery-h-2",
+              "order": 2,
+              "text": "Only the most recent value remains."
+            },
+            {
+              "id": "py-first-unit-4-change-value-q-3-mastery-h-3",
+              "order": 3,
+              "text": "The 1 is gone; score is 2."
+            }
+          ],
+          "difficulty": "beginner"
+        }
+      ],
+      "commonMistakes": [
+        {
+          "id": "py-first-unit-4-change-value-cm-1",
+          "mistake": "Thinking both values are kept (that score = 2 adds to the old 1).",
+          "correction": "Reassignment REPLACES the old value. After score = 2, the 1 is gone; score holds only 2.",
+          "relatedQuestionId": "py-first-unit-4-change-value-q-3-mastery"
+        },
+        {
+          "id": "py-first-unit-4-change-value-cm-2",
+          "mistake": "Thinking = compares values.",
+          "correction": "A single = stores a value into the variable; it does not check if two things are equal."
+        },
+        {
+          "id": "py-first-unit-4-change-value-cm-3",
+          "mistake": "Expecting print(score) to show 1 after score = 2.",
+          "correction": "It shows 2, the latest value."
+        }
+      ],
+      "deterministicSteps": [
+        {
+          "id": "py-first-unit-4-change-value-step-1",
+          "title": "Step 1: Giving a variable a new value",
+          "intro": "A variable isn't locked to its first value — you can give it a new one at any time, just by assigning again with =. The newer assignment simply overwrites the old value. This is essential because most real data changes: a score, a page number, a user's status.\n\nA common confusion is expecting a second assignment to create a separate variable; it doesn't — it reuses the same name.",
+          "example": "score = 0\nscore = 10\n# score now holds 10",
+          "mcq": {
+            "question": "What happens when you assign a new value to a variable that already has one?",
+            "options": [
+              "The new value replaces the old one",
+              "Python creates a second variable",
+              "Python refuses and shows an error"
+            ],
+            "correctAnswer": "The new value replaces the old one",
+            "feedbackCorrect": "Right — assigning again overwrites the old value. After score = 10, score holds 10.",
+            "feedbackIncorrect": "Assigning again reuses the same name and replaces the value: after score = 10, score holds 10."
+          },
+          "checkpointPrompt": "Good? Let's keep going.",
+          "summary": "Reassigning a variable replaces its old value with a new one."
+        },
+        {
+          "id": "py-first-unit-4-change-value-step-2",
+          "title": "Step 2: The latest value wins",
+          "intro": "When a variable has been changed several times, only the most recent value survives — the earlier ones are gone, not kept in some history. So whenever you read a variable, you get its latest value, which is exactly why the order of your lines matters.\n\nA common beginner mistake is expecting an older value to still be available; once overwritten, it is gone unless you saved it elsewhere.",
+          "example": "x = 1\nx = 9\nprint(x)\n# shows: 9   (the 1 is gone)",
+          "mcq": {
+            "question": "After a variable has been reassigned a few times, which value do you get when you read it?",
+            "options": [
+              "The most recent one",
+              "The first one it ever had",
+              "All of them together"
+            ],
+            "correctAnswer": "The most recent one",
+            "feedbackCorrect": "Right — only the latest value remains. After x = 1 then x = 9, x is 9.",
+            "feedbackIncorrect": "You always get the latest value: after x = 1 then x = 9, reading x gives 9."
+          },
+          "checkpointPrompt": "Clear? One more idea to go.",
+          "summary": "A variable keeps only its latest value; the older ones are gone."
+        },
+        {
+          "id": "py-first-unit-4-change-value-step-3",
+          "title": "Step 3: Tracking things that change",
+          "intro": "Putting it together: because variables can change, programs use them to track state — information that evolves as the program runs. A game tracks a score and lives; a quiz tracks the current question; a download tracks progress.\n\nEach time something happens, the program reassigns the variable to the new value. The big idea: variables give a program a memory that updates over time.",
+          "example": "lives = 3\nlives = 2   # player lost one life\n# lives now holds 2",
+          "open": {
+            "question": "Can you name something a program might track by changing a variable over time?",
+            "expectedIdea": "Any evolving piece of state — e.g. a game score, remaining lives, download/progress percentage, current level, or number of items in a cart.",
+            "acceptableAnswers": [
+              "A game score",
+              "Lives remaining in a game",
+              "Download progress",
+              "The current level",
+              "Items in a shopping cart"
+            ],
+            "hint": "Think of anything that changes while a program runs — a score going up, lives going down, a progress bar filling. Each is a variable that gets reassigned."
+          },
+          "checkpointPrompt": "If that makes sense, you've reached the end of the lesson — ready to wrap up?",
+          "summary": "Variables let programs track changing state like score, lives, or progress."
+        }
+      ],
+      "deterministicOverview": "In this lesson we'll learn how to change what a variable holds.\n\nWe'll cover three ideas: (1) reassigning a variable to a new value, (2) why the latest value is the one that counts, and (3) how changing values lets programs track things like a score or lives.\n\nBy the end you'll understand how variables change over time. First idea coming up."
+    }
+  ],
+  "metadata": {
+    "author": "course-author",
+    "createdAt": "2026-07-03T14:05:10.381Z",
+    "updatedAt": "2026-07-03T14:05:10.381Z",
+    "language": "en",
+    "level": "beginner",
+    "tags": [
+      "python",
+      "beginner",
+      "first-steps",
+      "high-very-guided"
+    ],
+    "estimatedDurationMinutes": 14
+  },
+  "reusableMetadata": {
+    "reusable": true,
+    "domain": "python",
+    "topics": [
+      "python",
+      "print",
+      "strings",
+      "variables",
+      "reassignment"
+    ],
+    "prerequisites": [],
+    "embeddingModel": "none",
+    "ragIndexed": false
+  }
+}

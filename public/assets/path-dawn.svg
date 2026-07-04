@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="psky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0A0A1A"/>
+      <stop offset="40%" stop-color="#2E2F77"/>
+      <stop offset="66%" stop-color="#7A2A0E"/>
+      <stop offset="100%" stop-color="#FF8B62"/>
+    </linearGradient>
+    <radialGradient id="psun" cx="50%" cy="52%" r="34%">
+      <stop offset="0%" stop-color="#FFE0B9" stop-opacity="0.95"/>
+      <stop offset="45%" stop-color="#FF8B62" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#FF8B62" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="900" height="1200" fill="url(#psky)"/>
+  <circle cx="450" cy="600" r="360" fill="url(#psun)"/>
+  <circle cx="450" cy="600" r="96" fill="#FFEAC6" opacity="0.92"/>
+  <!-- rolling hills flanking the path -->
+  <path d="M0 720 L250 640 L520 720 L780 650 L900 700 L900 1200 L0 1200 Z" fill="#1A3426" opacity="0.6"/>
+  <path d="M0 820 L300 760 L900 820 L900 1200 L0 1200 Z" fill="#122019" opacity="0.9"/>
+  <!-- a path in perspective leading to the sun -->
+  <path d="M420 640 L480 640 L640 1200 L200 1200 Z" fill="#2A1B12" opacity="0.9"/>
+  <path d="M446 660 L454 660 L470 1200 L400 1200 Z" fill="#FFB194" opacity="0.28"/>
+  <path d="M0 980 L360 900 L900 970 L900 1200 L0 1200 Z" fill="#0A0A0A"/>
+</svg>

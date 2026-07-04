@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 600" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="hsky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0A0A1A"/>
+      <stop offset="45%" stop-color="#211E48"/>
+      <stop offset="78%" stop-color="#3D4A9E"/>
+      <stop offset="100%" stop-color="#5C6BCB"/>
+    </linearGradient>
+    <radialGradient id="hglow" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#A6B2F7" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#A6B2F7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1400" height="600" fill="url(#hsky)"/>
+  <rect width="1400" height="600" fill="url(#hglow)"/>
+  <!-- faint constellation of connected nodes: a calm nod to learning/AI -->
+  <g stroke="#C7CFFB" stroke-width="1.5" opacity="0.5">
+    <line x1="230" y1="150" x2="430" y2="250"/>
+    <line x1="430" y1="250" x2="620" y2="170"/>
+    <line x1="620" y1="170" x2="820" y2="300"/>
+    <line x1="820" y1="300" x2="1010" y2="210"/>
+    <line x1="430" y1="250" x2="560" y2="400"/>
+    <line x1="820" y1="300" x2="700" y2="440"/>
+    <line x1="1010" y1="210" x2="1180" y2="330"/>
+  </g>
+  <g fill="#E3E8FD" opacity="0.92">
+    <circle cx="230" cy="150" r="6"/>
+    <circle cx="430" cy="250" r="7"/>
+    <circle cx="620" cy="170" r="6"/>
+    <circle cx="820" cy="300" r="8"/>
+    <circle cx="1010" cy="210" r="6"/>
+    <circle cx="560" cy="400" r="5"/>
+    <circle cx="700" cy="440" r="6"/>
+    <circle cx="1180" cy="330" r="5"/>
+  </g>
+  <path d="M0 470 L340 420 L760 480 L1120 425 L1400 470 L1400 600 L0 600 Z" fill="#1F1F4F" opacity="0.85"/>
+  <path d="M0 540 L420 505 L900 545 L1400 515 L1400 600 L0 600 Z" fill="#0A0A0A"/>
+</svg>

@@ -7,6 +7,8 @@
   "scripts": {
     "plan": "tsx src/index.ts plan",
     "generate": "tsx src/index.ts generate",
+    "generate:variants": "tsx src/index.ts generate:variants",
+    "generate:variant": "tsx src/index.ts generate:variant",
     "validate": "tsx src/index.ts validate",
     "repair": "tsx src/index.ts repair",
     "register": "tsx src/index.ts register",

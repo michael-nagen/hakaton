@@ -3,9 +3,9 @@
 // ONE implementation of TutorProvider, parameterized by a ModelProvider
 // transport. It renders the prompt, calls generateText, and normalizes the
 // reply into a TutorResponse with JSON repair + one stricter retry + a safe
-// fallback. All named providers (Gemini/OpenRouter/Local/Custom/Built-in) are
-// just this wired to a different transport — so lesson logic never changes when
-// the provider changes.
+// fallback. All named providers (Gemini/OpenRouter/Local/Custom) are just this
+// wired to a different transport — so lesson logic never changes when the
+// provider changes.
 
 import type { AiProviderConfig, ModelProvider } from '../model-provider';
 import {
@@ -14,7 +14,6 @@ import {
   createOpenRouterProvider,
   createLocalModelProvider,
   createCustomProvider,
-  mockModelProvider,
 } from '../model-provider';
 import {
   buildTutorResponseSystemPrompt,
@@ -65,10 +64,6 @@ export function createTutorProviderFromConfig(params: { config: AiProviderConfig
 // ── Named factories (spec fidelity) ──────────────────────────────────
 // Thin wrappers so provider intent reads clearly at call sites. Each is the
 // generic tutor provider over the matching transport.
-
-export function createBuiltInTutorProvider(): TutorProvider {
-  return createTutorProvider({ modelProvider: mockModelProvider });
-}
 
 export function createGeminiTutorProvider(params: { apiKey: string; model?: string }): TutorProvider {
   return createTutorProvider({ modelProvider: createGeminiProvider(params) });

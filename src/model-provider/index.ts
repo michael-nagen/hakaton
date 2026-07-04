@@ -1,7 +1,5 @@
 export * from './model-provider.types';
 export * from './ai-provider-config.types';
-export * from './mock-model.provider';
-export * from './model-provider.registry';
 export * from './limits';
 export * from './gemini-model.provider';
 export * from './openrouter-model.provider';

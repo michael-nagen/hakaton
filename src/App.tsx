@@ -1,38 +1,40 @@
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { AppShell } from './layouts/AppShell';
 import { DashboardPage } from './pages/DashboardPage';
 import { AppDetailPage } from './pages/AppDetailPage';
-import { CourseDemoPage } from './pages/CourseDemoPage';
 import { CourseCatalogPage } from './pages/lesson/CourseCatalogPage';
 import { CoursePlayerPage } from './pages/lesson/CoursePlayerPage';
-import { TutorDemoPage } from './pages/TutorDemoPage';
-import { SimpleLessonDemoPage } from './pages/SimpleLessonDemoPage';
 import { AiSetupPage } from './pages/AiSetupPage';
+import { WelcomePage } from './pages/flow/WelcomePage';
+import { ChooseGuidePage } from './pages/flow/ChooseGuidePage';
+import { ChoosePathPage } from './pages/flow/ChoosePathPage';
+import { AiFundamentalsPage } from './pages/flow/AiFundamentalsPage';
 import { AiProviderProvider } from './contexts/AiProviderContext';
 
 const router = createBrowserRouter([
-  // ── Main product: the 3-screen learning flow ──────────────────────────
-  // 1) AI guide  2) lesson selection  3) tutor player. Kept standalone (no
-  // dashboard chrome) so the experience stays simple: choose AI → choose
-  // lesson → learn.
-  { path: '/', element: <Navigate to="/ai-setup" replace /> },
-  { path: '/ai-setup', element: <AiSetupPage /> },        // Screen 1
-  { path: '/courses', element: <CourseCatalogPage /> },   // Screen 2 (catalog)
-  { path: '/courses/:courseId', element: <CoursePlayerPage /> }, // Screen 2b + 3
+  // ── Main product: the MVP learning flow (Maestro design) ──────────────
+  // 1) Welcome  2) Choose AI guide  3) Choose your path (catalog)
+  // 4) Course path  5) Lesson parts  6) Guided tutor room.
+  // Pages 4–6 live inside one component (AiFundamentalsPage) with local view
+  // state, exactly as the design models them.
+  { path: '/', element: <WelcomePage /> },                     // Page 1
+  { path: '/guide', element: <ChooseGuidePage /> },            // Page 2
+  { path: '/paths', element: <ChoosePathPage /> },             // Page 3
+  { path: '/learn/ai-fundamentals', element: <AiFundamentalsPage /> }, // Pages 4–6
 
   // ── Secondary / internal (not part of the main flow) ──────────────────
-  // The apps dashboard is demoted to /apps; demo harnesses stay reachable by
-  // URL for internal testing but are not surfaced in the product navigation.
+  // The earlier technical screens (provider setup, course player, apps
+  // dashboard) are kept reachable by URL but are no longer the entry point.
+  { path: '/ai-setup', element: <AiSetupPage /> },
+  { path: '/courses', element: <CourseCatalogPage /> },
+  { path: '/courses/:courseId', element: <CoursePlayerPage /> },
   {
     element: <AppShell />,
     children: [
       { path: 'apps', element: <DashboardPage /> },
       { path: 'app/:appId', element: <AppDetailPage /> },
-      { path: 'course-demo', element: <CourseDemoPage /> },
     ],
   },
-  { path: '/tutor-demo', element: <TutorDemoPage /> },
-  { path: '/simple-lesson-demo', element: <SimpleLessonDemoPage /> },
 ]);
 
 export default function App() {

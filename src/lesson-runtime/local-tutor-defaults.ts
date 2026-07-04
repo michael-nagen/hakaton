@@ -21,7 +21,8 @@
 // database, NO durable memory, and does NOT change the Tutor prompt. The app's
 // memory model is already "last messages only" (see to-tutor-input.ts — the
 // model only ever receives the last N messages, never a checklist or archive);
-// the local path just sets that window to 8.
+// the live local path uses the same focused window as the cloud path (4), which
+// intentionally diverges from the harness memory-experiment window.
 
 import { DEFAULT_LOCAL_MODEL_ID } from '../model-provider/local-model-catalog';
 // Import the type from its concrete source file, NOT the model-provider barrel,
@@ -70,7 +71,12 @@ export const LOCAL_DEVICE_TUTOR_DEFAULTS: LocalDeviceTutorDefaults = {
   strategy: SHARED_LOCAL_TUTOR_DEFAULTS.strategy,
   lessonVariant: SHARED_LOCAL_TUTOR_DEFAULTS.lessonVariant,
   memoryMode: SHARED_LOCAL_TUTOR_DEFAULTS.memoryMode,
-  lastMessagesLimit: SHARED_LOCAL_TUTOR_DEFAULTS.lastMessagesLimit,
+  // The LIVE on-device tutor uses the app's focused window (4), NOT the harness
+  // memory-experiment window (SHARED_LOCAL_TUTOR_DEFAULTS.lastMessagesLimit). The
+  // live main prompt already carries a strict JSON contract and Llama 3.2 3B is
+  // small, so we keep recent-message context lightweight and consistent with the
+  // cloud path. The harness memory experiment stays untouched in its own config.
+  lastMessagesLimit: DEFAULT_RECENT_MESSAGES_LIMIT,
   lessonCompletionEnabled: SHARED_LOCAL_TUTOR_DEFAULTS.lessonCompletion,
 };
 

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 500" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="csky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#20347A"/>
+      <stop offset="45%" stop-color="#5C6BCB"/>
+      <stop offset="78%" stop-color="#A6B2F7"/>
+      <stop offset="100%" stop-color="#E3E8FD"/>
+    </linearGradient>
+    <radialGradient id="cglow" cx="72%" cy="30%" r="40%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.85"/>
+      <stop offset="60%" stop-color="#FFECD4" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#FFECD4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1400" height="500" fill="url(#csky)"/>
+  <circle cx="1010" cy="150" r="260" fill="url(#cglow)"/>
+  <circle cx="1010" cy="150" r="64" fill="#FFFFFF" opacity="0.9"/>
+  <!-- distant calm hills -->
+  <path d="M0 360 L300 320 L640 360 L980 315 L1400 355 L1400 500 L0 500 Z" fill="#51985C" opacity="0.5"/>
+  <path d="M0 410 L360 380 L760 415 L1120 375 L1400 405 L1400 500 L0 500 Z" fill="#27764B" opacity="0.7"/>
+  <path d="M0 455 L420 430 L900 458 L1400 435 L1400 500 L0 500 Z" fill="#1F4F35"/>
+</svg>

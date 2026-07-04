@@ -9,6 +9,11 @@
 //                                        past the last step ⇒ lesson completed
 //   finish                             → complete all steps, lesson completed
 //
+// When `allowCompletion` is false the lesson can never reach the terminal
+// `completed` status: any transition that would complete it is downgraded to
+// `in_progress` (staying on the last step), so the lesson stays open forever.
+// This mirrors the harness's "lesson completion disabled" mode as a user option.
+//
 // Returns a NEW state; never mutates its input.
 
 import type { TutorResponse } from '../tutor-runtime';
@@ -26,8 +31,10 @@ function withStepCompleted(
 export function applyTutorAction(params: {
   state: LessonSessionState;
   response: TutorResponse;
+  /** When false, the lesson can never reach `completed` (stays open forever). */
+  allowCompletion?: boolean;
 }): LessonSessionState {
-  const { state, response } = params;
+  const { state, response, allowCompletion = true } = params;
 
   // The model's level estimate always feeds forward (cheap, always useful).
   const base: LessonSessionState = {
@@ -35,7 +42,30 @@ export function applyTutorAction(params: {
     levelEstimate: response.studentLevelEstimate,
   };
 
-  switch (response.nextAction) {
+  const next = decideNextState({ base, action: response.nextAction });
+
+  // Completion disabled → never let the lesson terminate. Keep every completed
+  // step (so progress still reflects the work) but hold the learner on the last
+  // step in `in_progress`, so the input never turns into a "done" state.
+  if (!allowCompletion && next.status === 'completed') {
+    return {
+      ...next,
+      status: 'in_progress',
+      currentStepIndex: Math.min(next.currentStepIndex, Math.max(base.stepIds.length - 1, 0)),
+    };
+  }
+
+  return next;
+}
+
+/** Pure step/status transition for an action, ignoring the completion toggle. */
+function decideNextState(params: {
+  base: LessonSessionState;
+  action: TutorResponse['nextAction'];
+}): LessonSessionState {
+  const { base, action } = params;
+
+  switch (action) {
     case 'finish': {
       return {
         ...base,
