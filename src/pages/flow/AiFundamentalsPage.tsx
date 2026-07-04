@@ -990,7 +990,7 @@ function GuidedRoomView(p: RoomProps) {
                   </span>
                   <a
                     href={p.video.watchUrl}
-                    target="_blank"
+                    target="lessonVideoTab"
                     rel="noreferrer"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 44, padding: '0 22px', borderRadius: 9999, background: '#fff', color: '#0A0A0A', fontFamily: 'var(--font-text)', fontSize: 15, fontWeight: 600, textDecoration: 'none' }}
                   >
@@ -1009,7 +1009,7 @@ function GuidedRoomView(p: RoomProps) {
               <div style={{ marginTop: 6, textAlign: 'center' }}>
                 <a
                   href={p.video.watchUrl}
-                  target="_blank"
+                  target="lessonVideoTab"
                   rel="noreferrer"
                   style={{ fontFamily: 'var(--font-text)', fontSize: 13, color: 'var(--color-fg-secondary)', textDecoration: 'underline' }}
                 >

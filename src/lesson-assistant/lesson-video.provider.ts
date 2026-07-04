@@ -19,7 +19,6 @@ import type { LessonContext, LessonVideoProvider, RecommendedVideo, TeachingPref
 
 const EMBED = 'https://www.youtube.com/embed';
 const WATCH = 'https://www.youtube.com/watch?v=';
-const SEARCH = 'https://www.youtube.com/results?search_query=';
 
 /** Kept for backward compatibility. No longer thrown — the provider now returns
  * a usable fallback link instead of failing when no API key is configured. */
@@ -69,30 +68,47 @@ export function buildVideoQuery(ctx: LessonContext, teachingPreference?: Teachin
   return `${base} explained for beginners ${preferenceTerms(teachingPreference)}`.replace(/\s+/g, ' ').trim();
 }
 
-/**
- * A tighter, topic-aware query for the keyless FALLBACK link. It leans on the
- * lesson subject (print / numbers / variables) plus the course title so the
- * search lands on focused beginner videos — not a generic Python playlist.
- */
-export function buildFallbackVideoQuery(ctx: LessonContext): string {
-  const hay = `${ctx.lessonTitle} ${ctx.lessonTopic ?? ''} ${ctx.currentStepTitle ?? ''} ${ctx.currentStepContent ?? ''}`.toLowerCase();
-  const course = ctx.courseTitle && /python/i.test(ctx.courseTitle) ? 'python' : ctx.courseTitle ?? '';
-  const lead = course || 'python';
-  if (/\bprint\b|output|hello|"?text"?/.test(hay)) return `${lead} print function output for beginners tutorial`;
-  if (/variable/.test(hay)) return `${lead} variables for beginners tutorial`;
-  if (/number|integer|float|math/.test(hay)) return `${lead} printing numbers for beginners tutorial`;
-  // Grounded in the actual lesson title so it still matches the topic.
-  return `${lead} ${ctx.lessonTitle} for beginners tutorial`.replace(/\s+/g, ' ').trim();
+// ── Curated fallback videos ──────────────────────────────────────────
+// Well-known, long-standing, embeddable beginner Python videos. Used as the
+// keyless fallback so the learner always gets ONE SPECIFIC video (embedded
+// inline in the modal — no new tab, no search page), matched to the lesson
+// subject. Ordered most-specific first.
+interface CuratedVideo {
+  videoId: string;
+  title: string;
 }
 
-/** The always-usable fallback: a direct, topic-scoped YouTube search link. */
+// NOTE: use only stable, hugely-popular, embeddable videos here so the inline
+// player never shows "video unavailable". freeCodeCamp's Python course
+// (rfscVS0vtbw) and Programming with Mosh's Python-in-1-hour (_uQrJ0TkZlc) are
+// long-standing and cover these beginner topics near the start.
+const CURATED_FALLBACKS: Array<{ match: RegExp; video: CuratedVideo }> = [
+  { match: /\bprint\b|output|hello|text/i, video: { videoId: 'rfscVS0vtbw', title: 'Python for Beginners — print() and showing text' } },
+  { match: /variable/i, video: { videoId: '_uQrJ0TkZlc', title: 'Python for Beginners — variables (Programming with Mosh)' } },
+  { match: /number|integer|float|math/i, video: { videoId: 'rfscVS0vtbw', title: 'Python for Beginners — numbers and printing' } },
+];
+
+// A very stable, hugely popular full beginner course (covers print, variables,
+// and numbers early) — the safe default when no keyword matches.
+const DEFAULT_FALLBACK: CuratedVideo = {
+  videoId: 'rfscVS0vtbw',
+  title: 'Python for Beginners — full beginner walkthrough',
+};
+
+/**
+ * The always-usable fallback: ONE specific, embeddable beginner video matched to
+ * the lesson subject. `embedUrl` is set so the UI plays it inline (no new tab);
+ * `watchUrl` is the same specific video's watch page for the "open on YouTube"
+ * link.
+ */
 export function buildFallbackVideo(ctx: LessonContext): RecommendedVideo {
-  const query = buildFallbackVideoQuery(ctx);
+  const hay = `${ctx.lessonTitle} ${ctx.lessonTopic ?? ''} ${ctx.currentStepTitle ?? ''} ${ctx.currentStepContent ?? ''}`;
+  const picked = CURATED_FALLBACKS.find((c) => c.match.test(hay))?.video ?? DEFAULT_FALLBACK;
   return {
-    videoId: '',
-    title: `Beginner videos for: ${ctx.lessonTitle}`,
-    embedUrl: '',
-    watchUrl: `${SEARCH}${encodeURIComponent(query)}`,
+    videoId: picked.videoId,
+    title: picked.title,
+    embedUrl: `${EMBED}/${picked.videoId}`,
+    watchUrl: `${WATCH}${picked.videoId}`,
     isFallback: true,
   };
 }
